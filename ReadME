@@ -27,9 +27,9 @@ path has to be adjusted in /DIRTocr/__init__.py (line 31)
 
 Usage:
 
-<run file path> full path to file with the root image
-<unique id> ID which will be a folder name in the working directory. Integer value needed
-<mask threshold> multiplier for the automatically determined mask threshold. 1.0 works fine and is default. If flashlight is used, the 0.6 is a good choice.
+<run file path> full path to the root image
+<unique id> ID which will be a folder name in the working directory. Integer value needed.
+<mask threshold> multiplier for the automatically determined mask threshold. 1.0 works fine and is default. For example, if a flashlight is used to take root images, then 0.6 is a good choice.
 <excised roots> number of roots placed at the right of the root crown, 0 - excised root analysis is off
 <crown root> 1 - crown root analysis is on, 0 - crown root analysis is off
 <segmentation> 1 -  is on, 0 - is off
@@ -38,12 +38,12 @@ Usage:
 <working directory> full path to folder were the result is stored
 
 Example: 
-python main.y /Users/image_folder/image_name.jpg 8 25.0 1 1 1 25.1 0 /Users/output_folder/
+python main.py /Users/image_folder/image_name.jpg 8 25.0 1 1 1 25.1 0 /Users/output_folder/
 
 Input is restricted to .jpg, .png and .tif images
 ------------------------------------------------------------
 
-For convenience we provide the runOnFolder script, that executes DIRT on all images in the folder.
+For convenience we provide the runOnFolder script, that executes DIRT on all images in a specified folder.
 
 Example: python runOnFolder.py /Users/image_folder/
 
