@@ -17,7 +17,7 @@ The software depends on:
 - the numpy package (http://sourceforge.net/projects/numpy/)
 - the scipy package (http://www.scipy.org/SciPy)
 
-Optionally binaries of can be used for tag recognition:
+Optionally binaries of standard OCR and BarCode software can be used for tag recognition:
 
 - tesseract (https://code.google.com/p/tesseract-ocr/)
 paths have to be adjusted in /DIRTocr/pytesser.py (line 12-14)
