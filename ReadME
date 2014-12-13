@@ -47,6 +47,6 @@ For convenience we provide the runOnFolder script, that executes DIRT on all ima
 
 Example: python runOnFolder.py /Users/image_folder/
 
-Please adjust line 38 according to the description above and note that the script uses 6 cores to compute images in parallel. The number of cores can be adjusted in line 32.
+Please adjust line 86 according to the description above and note that the script uses 6 cores to compute images in parallel. The number of cores can be adjusted in line 80.
 
 ------------------------------------------------------------
