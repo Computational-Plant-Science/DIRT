@@ -23,7 +23,7 @@ Optionally binaries of standard OCR and BarCode software can be used for tag rec
 paths have to be adjusted in /DIRTocr/pytesser.py (line 12-14)
 
 - zbar (http://zbar.sourceforge.net) 
-path has to be adjusted in /DIRTocr/__init__.py (line 31)
+path has to be adjusted in /DIRTocr/__init__.py (line 28)
 
 Usage:
 
