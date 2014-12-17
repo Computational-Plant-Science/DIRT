@@ -24,12 +24,8 @@ def getTextFromImage(tagImg,scratchPath,scratchText='temp'):
 
 def getCodeFromImage(tagImg,scratchPath):
     
-    #zbar_exe_name = '/opt/local/bin/tesseract' # Name of executable to be called at command line
-    #img=pil.Image.fromarray(tagImg, mode='L')
-    #img.save(scratchPath+'temp.bmp', dpi=(300,300))
     scipy.misc.imsave(scratchPath+'temp.bmp',tagImg)
     args = ['/usr/local/bin/zbarimg','-q',scratchPath+'temp.bmp']
-    #code = subprocess.call(['/usr/local/bin/zbarimg','-q','/Users/koalaspirit/Desktop/photo3.JPG'])
     try:
         code = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()[0]
     except Exception as ex:
