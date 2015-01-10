@@ -1,7 +1,7 @@
 #! /nv/hp10/adas30/bin/python
 '''
 ----------------------------------------------------------------------------------------------------
-DIRT - An automatic highthroughput root phenotyping platform
+DIRT 1.0 - An automatic highthroughput root phenotyping platform
 Web interface by Abhiram Das - adas30@biology.gatech.edu
 
 http://www.dirt.biology.gatech.edu
