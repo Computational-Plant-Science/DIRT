@@ -55,7 +55,7 @@ Please adjust line 86 according to the description above and note that the scrip
 
 ------------------------------------------------------------
 
-Changes in DIRT 1.1 (10 January 2015):
+Changes in DIRT 1.1 (14 January 2015):
 ------------------------------------------------------------
 - storage of trait values is changed from a list data structure to a dictionary to allow trait selection controlled by the file traits.csv
 - added support for trait selection to reduce computation time. See example file traits.csv (1 - trait is computed, 0 - trait is not computed)
