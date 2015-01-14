@@ -70,7 +70,7 @@ class RootTipPaths(object):
     '''
     
 
-    def __init__(self, io,tp=1.0):
+    def __init__(self, io):
         '''
         Constructor
         '''
@@ -78,7 +78,6 @@ class RootTipPaths(object):
         self.__io=io
         self.__id=io.getID()
         self.__currentIdx=io.getCurrentID()
-        self.__tp=tp
         self.__medianTipDiameter=0.0
         self.__meanTipDiameter=0.0
         self.__90TipDiameter=0.0
@@ -107,8 +106,6 @@ class RootTipPaths(object):
             return split
     def getAllTips(self):
         return self.__tips
-    def setTipDiaFilter(self,tp):   
-        self.__tp=tp 
     def model_func(self,t, A, K, C):
         return A * np.exp(K * t) + C
     def model_func_dia(self,t, A, K, C, dia):
@@ -189,10 +186,9 @@ class RootTipPaths(object):
                 rootW.append(vprop[i]['coord'][1])
             if count<=1:
                 if i!= thickestPath[len(thickestPath)-1]: 
-                    if vprop[i]['diameter'] > self.__tp:
-                        tips.append(G.vertex_index[i])
-                        tipDia.append(vprop[i]['diameter'])
-                        tipHeight.append(vprop[i]['coord'][0])
+                    tips.append(G.vertex_index[i])
+                    tipDia.append(vprop[i]['diameter'])
+                    tipHeight.append(vprop[i]['coord'][0])
         self.__medianTipDiameter=np.median(tipDia)
         print 'Median Tip Diameter: '+str(self.__medianTipDiameter)
         self.__meanTipDiameter=np.mean(tipDia)
@@ -202,23 +198,31 @@ class RootTipPaths(object):
         self.__io.saveArray(tipHeight,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_TipDiaHeightY')
 
         try:
-            percent90=np.max(tipHeight)*0.9
-            idx = list(np.where(tipHeight>=percent90)[0])
-            tmpdia90=[]
-            for i in idx:
-                tmpdia90.append(tipDia[i])
+             percent90=np.max(tipHeight)*0.9
+             idx = list(np.where(tipHeight>=percent90)[0])
+             tmpdia90=[]
+             for i in idx:
+                 tmpdia90.append(tipDia[i])
         
-            if tmpdia90:
+             if tmpdia90:
                 dia90=np.max(tmpdia90)
-            else:
+             else:
                 dia90 = 0
-            self.__90TipDiameter=dia90
-            if tipDia:
+             self.__90TipDiameter=dia90
+             if tipDia:
                 self.__90TipDiameter=np.max(tipDia)
-            else:
+             else:
                 self.__90TipDiameter=0
+             if tipHeight:
+                self.__rootingDepth=np.max(tipHeight)
+             else:
+                self.__rootingDepth=0
+             if rootW:
+                self.__rootWidth=np.max(rootW)-np.min(rootW)
+             else:
+                self.__rootWidth=0
         except:
-            pass
+           pass
         return tips
                 
     def getRTPSkeleton(self,thickestPath,G,newRTp=False):
@@ -236,4 +240,4 @@ class RootTipPaths(object):
             if eprop[e]['RTP']==False:
                 rtpSkel.remove_edge(e)
                 
-        return rtpSkel,len(self.__RTP),self.__medianTipDiameter,self.__meanTipDiameter,self.__90TipDiameter,-1,self.__RTP,tips,-1,-1
+        return rtpSkel,len(self.__RTP),self.__medianTipDiameter,self.__meanTipDiameter,self.__90TipDiameter,self.__RTP,tips,self.__rootingDepth,self.__rootWidth

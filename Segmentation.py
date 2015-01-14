@@ -295,8 +295,11 @@ class Segmentation(object):
         eprop=G.new_edge_property('object')
         epropW=G.new_edge_property("float")
         h, w = np.shape(img)
-        avgScale=(xScale+yScale)/2
-        
+        if xScale>0 and yScale>0: avgScale=(xScale+yScale)/2
+        else: 
+            avgScale=1.
+            xScale=1.
+            yScale=1.
         addedVerticesLine2=[]
         vListLine2=[]
         percentOld=0
@@ -587,6 +590,8 @@ class Segmentation(object):
         return vertexIndex
     
     def findLaterals(self,RTP,G,scale):
+        if scale ==0.:
+            scale=1.
         corresBranchPoints=[]
         laterals=[]
         distToFirstLateral=2000000000000000
@@ -610,6 +615,96 @@ class Segmentation(object):
                 if distToFirstLateral < lBranch: 
                     distToFirstLateral=lBranch
         
-        return laterals,corresBranchPoints,distToFirstLateral
+        return laterals,corresBranchPoints,distToFirstLateral*scale
+                         
+    
+    def findHypocotylCluster(self,thickestPath,rtpSkel):
+        print 'find Cluster'
+        branchingPaths=[]
+        branchingPoints=[]
+        radius=[]
+        vprop= rtpSkel.vertex_properties["vp"]
+        for i in thickestPath:
+            # if len(nx.neighbors(rtpSkel, i))>2:
+                branchingPaths.append(vprop[i]['nrOfPaths'])
+                branchingPoints.append(i)
+                #radius.append(rtpSkel.node[i]['diameter'])
+
+        for i in branchingPoints:         
+            radius.append(vprop[i]['diameter'])
+            
+        bp=[]
+        rad=[]    
+        tmpAvg=0.
+        counter=0.
+        for i in range(len(branchingPoints)-1):
+            if branchingPaths[i]==branchingPaths[i+1]:
+                tmpAvg+=radius[i]
+                counter+=1
+            elif counter>0:
+                tmpAvg=tmpAvg/counter 
+                rad.append(tmpAvg)
+                bp.append(branchingPaths[i])
+                counter=0.
+                tmpAvg=0.
+        
+        return bp,rad
+                
+    def makeSegmentationPicture(self,thickestPath,G,crownImg,xScale,yScale,c1x,c1y,c2x,c2y,c3x=None,c3y=None):
+
+        print 'make cluster picture'
+        crownImg=m.as_rgb(crownImg,crownImg,crownImg)
+        vprop=G.vertex_properties["vp"]
+        for i in thickestPath:
+
+            if vprop[i]['nrOfPaths'] in c1y:
+
+                y=int(vprop[i]['imgIdx'][0])
+                x=int(vprop[i]['imgIdx'][1])
+                try: crownImg[x][y]=(125,0,0)
+                except: pass
+                dia=vprop[i]['diameter']/(xScale/2+yScale/2)
+                dia=dia*1.5
+                for j in range(int(dia)):
+                    try: crownImg[x][y+j]=(125,0,0)
+                    except: pass
+                    try: crownImg[x][y-j]=(125,0,0)
+                    except: pass
+                    try: crownImg[x-j][y]=(125,0,0)
+                    except: pass
+                    try: crownImg[x+j][y]=(125,0,0)
+                    except: pass
+            elif vprop[i]['nrOfPaths'] in c2y:
+                y=int(vprop[i]['imgIdx'][0])
+                x=int(vprop[i]['imgIdx'][1])
+                try: crownImg[x][y]=(125,0,0)
+                except: pass
+                dia=vprop[i]['diameter']/(xScale/2+yScale/2)
+                dia=dia*1.5
+                for j in range(int(dia)):
+                    try: crownImg[x][y+j]=(0,125,0)
+                    except: pass
+                    try: crownImg[x][y-j]=(0,125,0)
+                    except: pass
+                    try: crownImg[x-j][y]=(0,125,0)
+                    except: pass
+                    try: crownImg[x+j][y]=(0,125,0)
+                    except: pass
+                y=int(vprop[i]['imgIdx'][0])
+                x=int(vprop[i]['imgIdx'][1])
+                try: crownImg[x][y]=(0,0,125)
+                except: pass
+                dia=vprop[i]['diameter']/(xScale/2+yScale/2)
+                dia=dia*1.5
+                for j in range(int(dia)):
+                    try: crownImg[x][y+j]=(0,0,125)
+                    except: pass
+                    try: crownImg[x][y-j]=(0,0,125)
+                    except: pass
+                    try: crownImg[x-j][y]=(0,0,125)
+                    except: pass
+                    try: crownImg[x+j][y]=(0,0,125)
+                    except: pass
+        return crownImg
         
             

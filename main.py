@@ -1,7 +1,7 @@
 #! /nv/hp10/adas30/bin/python
 '''
 ----------------------------------------------------------------------------------------------------
-DIRT 1.0 - An automatic highthroughput root phenotyping platform
+DIRT 1.1 - An automatic high throughput root phenotyping platform
 Web interface by Abhiram Das - adas30@biology.gatech.edu
 
 http://www.dirt.biology.gatech.edu
@@ -26,10 +26,10 @@ The software uses free code that had no references when found on the net:
 - http://www.daniweb.com/software-development/python/threads/31449/k-means-clustering
 
 The software uses modified code from the scikit.image:
-- adaptive threshholding in Masking.py (http://scikit-image.org)
+- adaptive thresholding in Masking.py (http://scikit-image.org)
 
 The software uses modified code from Kyle Fox:
-    - fixOrientation.py: https://github.com/kylefox/python-image-orientation-patch
+- fixOrientation.py: https://github.com/kylefox/python-image-orientation-patch
 
 
 Please cite the DIRT Paper if you use the code for your scientific project.
@@ -93,7 +93,6 @@ import Preprocessing
 import Skeleton
 import Analysis
 import RootTipPaths
-import time
 from fixImageOrientation import *
 
 '''
@@ -103,15 +102,24 @@ import os
 import pickle
 import csv
 import sys
+import time
+from collections import OrderedDict
 
 '''
 #global defs
 '''
-allLat=[]
-allPara=[]
 allCrown=[]
+allPara=[]
 f=[]
 imgID=None
+io=IO.IO()
+options=[]
+scale=None
+ID=None
+stemCorrection=False
+maxExRoot=None
+traitDict= OrderedDict()
+
 def init(fpath,io):
     oldpath = os.getcwd()
     io.setHomePath(fpath)
@@ -149,10 +157,29 @@ def init(fpath,io):
             os.mkdir('./Crown/Result/')
     
     os.chdir(oldpath)
+    readTraits(options[11][1])
+def readTraits(myFilePath='./traits.csv'):
+    global traitDict
+    #check to make sure its a file not a sub folder
+    if (os.path.isfile(myFilePath) and myFilePath.endswith(".csv")):
+        with open(myFilePath, 'U') as csvfile: 
+            #sniff to find the format 
+            fileDialect = csv.Sniffer().sniff(csvfile.read(1024))
+            csvfile.seek(0)
+            #read the CSV file into a dictionary
+            dictReader = csv.reader(csvfile, dialect=fileDialect)
+            for row in dictReader:
+                try:
+                    traitDict[row[0]]=bool(int(row[1]))
+                except:
+                    print 'invalid entry in trait file: '+ str(row)
+                    pass
+    
+    return 
     
 def readOptions():
-    options=[]
-    if len(sys.argv)==10:
+    global options
+    if len(sys.argv)==12:
         options.append([0,os.path.dirname(sys.argv[1])+'/'])
         options.append([0,os.path.basename(sys.argv[1])])
         options.append([0,sys.argv[2]])
@@ -163,6 +190,9 @@ def readOptions():
         options.append([0,sys.argv[7]])
         options.append([0,sys.argv[8]])
         options.append([0,sys.argv[9]])
+        options.append([0,sys.argv[10]])
+        options.append([0,sys.argv[11]])
+
     else:
         with open('./options.csv','U') as csvfile: 
             filedata= csv.reader(csvfile)
@@ -172,8 +202,19 @@ def readOptions():
         
     return options
 
-def threadSegmentation(filepath,imgFile,imgID,maxExRoot,marker):
+def ifAnyKeyIsTrue(listOfKeys):
+    for i in listOfKeys:
+        if traitDict[i]==True:
+            return True
+    return False
+
+def threadSegmentation(filepath,imgFile,imgID,maxExRoot,rootCrown,marker):
     
+    global io
+    global scale
+    global stemCorrection
+    
+    stemCorrection=bool(int(options[8][1]))
     io.setFileName(imgFile)
     io.setidIdx(imgID)
     prep=Preprocessing.Preprocessing(io)
@@ -190,7 +231,7 @@ def threadSegmentation(filepath,imgFile,imgID,maxExRoot,marker):
 
     if len(img)>0: 
         currT=time.time()       
-        Failed,tagExtract,circleRatio, circleWidth, circleHeight = prep.prepocess(img,scale=float(options[3][1]),nrExRoot=maxExRoot,marker=marker)
+        Failed,tagExtract,circleRatio, circleWidth, circleHeight = prep.prepocess(img,rootCrown,scale=float(options[3][1]),nrExRoot=maxExRoot,marker=marker,stemCorrection=stemCorrection)
         print 'Segmentation finished in '+str(time.time()-currT)+'s'
         if Failed == False:
             xScale=scale/float(circleWidth)
@@ -215,8 +256,13 @@ def threadSegmentation(filepath,imgFile,imgID,maxExRoot,marker):
             else: allPara.append(para)
 
 def threadCrown(filepath):
+    global io
+    
+    rtpSkel=-1
+    crownT=OrderedDict()
     imgL=[]
-    tipdiameter=float(options[8][1])
+    stemCorrection=bool(int(options[8][1]))
+    
     print io.getHomePath()
     os.chdir(io.getHomePath())
     io.setHomePath('./Crown/')
@@ -229,171 +275,175 @@ def threadCrown(filepath):
         xScale=allPara[counter][7]
         yScale=allPara[counter][8]
         analysis=Analysis.Analysis(io,(xScale+yScale)/2)
-        rtp=RootTipPaths.RootTipPaths(io,tp=tipdiameter)
-        rtp.setTipDiaFilter(tipdiameter*(xScale+yScale)/2)
-        crownT=[]
+        rtp=RootTipPaths.RootTipPaths(io)
+        
         
         try:
             img=scipy.misc.imread(i,flatten=True)
         except:
             print 'Image not readable'
             img=-1
+            
         if len(img)>0:
             seg=Segmentation.Segmentation(img,io)
             imgL=seg.label()
             print 'compute root profile'
             currT=time.time()
-            rootDensity,medianWidth,maxWidth,D,DS,_,_,_,_=analysis.getWidthOverHeight(imgL,xScale,yScale)
-            print 'Mask traits computed '+str(time.time()-currT)+'s'
-            currT=time.time()
-            skel=Skeleton.Skeleton(imgL)
-            testSkel,testDia=skel.skel(imgL)
-            print 'Medial axis computed '+str(time.time()-currT)+'s'
-            currT=time.time()
-            path,skelGraph,stemDia,skelSize=seg.findThickestPath(testSkel,testDia,xScale,yScale)
-            allPara[counter][10]=skelSize
-            print 'Central path computed '+str(time.time()-currT)+'s'
-            print 'compute rtp skeleton'
-            currT=time.time()
-            rtpSkel,nrOfRTP, medianTipDiameter,meanDiameter,dia90, _, rtps, tips, _, _ =rtp.getRTPSkeleton(path,skelGraph,True)
+            if ifAnyKeyIsTrue(['AVG_DENSITY','WIDTH_MED','WIDTH_MAX','DIA_STM_SIMPLE','D10','D20','D30','D40','D50','D60','D70','D80','D90','DS10','DS20','DS30','DS40','DS50','DS60','DS70','DS80','DS90','AREA','ANG_TOP','ANG_BTM']):
+                crownT['AVG_DENSITY'],crownT['WIDTH_MED'],crownT['WIDTH_MAX'],crownT['D10'],crownT['D20'],crownT['D30'],crownT['D40'],crownT['D50'],crownT['D60'],crownT['D70'],crownT['D80'],crownT['D90'],crownT['DS10'],crownT['DS20'],crownT['DS30'],crownT['DS40'],crownT['DS50'],crownT['DS60'],crownT['DS70'],crownT['DS80'],crownT['DS90'],crownT['AREA'],crownT['DIA_STM_SIMPLE'],crownT['ANG_TOP'],crownT['ANG_BTM']=analysis.getWidthOverHeight(imgL,xScale,yScale)
+                print 'Mask traits computed '+str(time.time()-currT)+'s'
+            
+            if ifAnyKeyIsTrue(['DIA_STM','TD_MED','TD_AVG','STA_RANGE','FD_STA','SD_STA','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_I','RTA_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED','NR_RTP_SEG_I','NR_RTP_SEG_II','ADVT_COUNT','BASAL_COUNT','ADVT_ANG','BASAL_ANG','HYP_DIA','TAP_DIA','MAX_DIA_90','DROP_50','CP_DIA25','CP_DIA50','CP_DIA75','CP_DIA90','SKL_DEPTH','SKL_WIDTH']):
+                currT=time.time()
+                skel=Skeleton.Skeleton(imgL)
+                testSkel,testDia=skel.skel(imgL)
+                print 'Medial axis computed '+str(time.time()-currT)+'s'
+                currT=time.time()
+                path,skelGraph,crownT['DIA_STM'],skelSize=seg.findThickestPath(testSkel,testDia,xScale,yScale)
+                allPara[counter][10]=skelSize
+                print 'Central path computed '+str(time.time()-currT)+'s'
+                
+            if ifAnyKeyIsTrue(['TD_MED','TD_AVG','STA_RANGE','FD_STA','SD_STA','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_I','RTA_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED','NR_RTP_SEG_I','NR_RTP_SEG_II','ADVT_COUNT','BASAL_COUNT','ADVT_ANG','BASAL_ANG','HYP_DIA','TAP_DIA','MAX_DIA_90','DROP_50','CP_DIA25','CP_DIA50','CP_DIA75','CP_DIA90','SKL_DEPTH','SKL_WIDTH','RTP_COUNT']):
+                print 'Compute RTP skeleton'
+                currT=time.time()
+                rtpSkel,crownT['RTP_COUNT'], crownT['TD_MED'],crownT['TD_AVG'],crownT['MAX_DIA_90'], rtps, tips, crownT['SKL_WIDTH'], crownT['SKL_DEPTH'] =rtp.getRTPSkeleton(path,skelGraph,True)
+                seg.setTips(tips)
+                print 'RTP Skeleton computed '+str(time.time()-currT)+'s'
+            
             allPara[len(allPara)-1][2]=seg.getFail()
-            seg.setTips(tips)
-            print 'RTP Skeleton computed '+str(time.time()-currT)+'s'
-            print 'compute symmetry'
-            currT=time.time()
-            vecSym=analysis.getSymmetry(rtps,rtpSkel)
-            print 'Symmetry computed '+str(time.time()-currT)+'s'
+            
+            
+            if ifAnyKeyIsTrue(['RDISTR_X','RDISTR_Y']):
+                print 'Compute spatial root distribution'
+                currT=time.time()
+                crownT['RDISTR_X'],crownT['RDISTR_Y']=analysis.getSymmetry(rtps,rtpSkel)
+                print 'Symmetry computed '+str(time.time()-currT)+'s'
             
             if rtpSkel!=-1:
-
-                lat,corrBranchpts,_=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
+                if ifAnyKeyIsTrue(['NR_RTP_SEG_I','NR_RTP_SEG_II','ADVT_COUNT','BASAL_COUNT','ADVT_ANG','BASAL_ANG','HYP_DIA','TAP_DIA']):
+                    print 'searching for hypocotyl'
+                    currT=time.time()
+                    branchRad,nrPaths=seg.findHypocotylCluster(path,rtpSkel)
+                    print 'hypocotyl computed '+str(time.time()-currT)+'s'
+                    print 'starting kmeans'
+                    try:
+                        currT=time.time()
+                        c1x,c1y,c2x,c2y = analysis.plotDiaRadius(nrPaths, branchRad,path,2)
+    
+                        print '2 clusters computed in '+str(time.time()-currT)+'s'
+    
+                        currT=time.time()
+                        segImg=seg.makeSegmentationPicture(path,rtpSkel,img,xScale,yScale,c1x,c1y,c2x,c2y)
+                        scipy.misc.imsave(io.getHomePath()+'/Result/' +io.getFileName()+ 'Seg2.png', segImg)
+                        crownT['ADVT_COUNT'],crownT['BASAL_COUNT'],crownT['NR_RTP_SEG_I'],crownT['NR_RTP_SEG_II'], crownT['HYP_DIA'], crownT['TAP_DIA'] =analysis.countRootsPerSegment(c1y,c2y,c1x,c2x)
+                    except:
+                        pass
+                    crownT['DROP_50']=analysis.RTPsOverDepth(path,rtpSkel)
+                    print 'count roots per segment'
+                    print 'Root classes computed in '+str(time.time()-currT)+'s'
+                
+                if ifAnyKeyIsTrue(['ADVT_ANG','BASAL_ANG','STA_RANGE','STA_DOM_I','STA_DOM_II','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_DOM_I','RTA_DOM_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED']):
+                    currT=time.time()
+                    lat,corrBranchpts,_=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
+                    print 'seg.findLaterals computed in '+str(time.time()-currT)+'s'
+                    print 'Compute angles at 2cm'
+                    currT=time.time()
+                    crownT['ADVT_ANG'],crownT['BASAL_ANG']=analysis.anglesPerClusterAtDist(c1y, c2y, rtpSkel, path, lat, corrBranchpts, (xScale+yScale)/2, dist=20)
+                    print 'angles at 2cm computed in '+str(time.time()-currT)+'s'
                     
-                try:
-                    print 'compute quantile angles'
-                    currT=time.time()
-                    a25,a50,a75,a90=analysis.calculateAngleQuantiles(path,lat,corrBranchpts,rtpSkel)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except:
-                    raise
-                    a25=['nan']
-                    a50=['nan']
-                    a75=['nan']
-                    a90=['nan']
-
-                    print 'ERROR: No quantile angles calculated'
-                
-                try:
-                    print 'compute angles'
-                    currT=time.time()
-                    angRangeN,avgAngleN,minangleN,maxAngleN,anglesN=analysis.calculateAngles(path,lat,corrBranchpts,rtpSkel)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except:
-                    avgAngleN='nan'
-                    minangleN='nan'
-                    maxAngleN='nan'
-                    angRangeN='nan'
-                    anglesN='nan'
-                    print 'ERROR: No angles calculated'
+                    if ifAnyKeyIsTrue(['STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II']):    
+                        try:
+                            print 'compute quantile angles'
+                            currT=time.time()
+                            a25,a50,a75,a90=analysis.calculateAngleQuantiles(path,lat,corrBranchpts,rtpSkel)
+                            print 'angles computed in '+str(time.time()-currT)+'s'
+                        except:
+                            a25=['nan']
+                            a50=['nan']
+                            a75=['nan']
+                            a90=['nan']
+                            print 'ERROR: No quantile angles calculated'
                     
+                    if ifAnyKeyIsTrue(['RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED']):
+                        try:
+                            print 'compute angles'
+                            currT=time.time()
+                            crownT['RTA_MED'],crownT['RTA_MIN'],crownT['RTA_MAX'],crownT['RTA_RANGE'],anglesN=analysis.calculateAngles(path,lat,corrBranchpts,rtpSkel)
+                            print 'RTA angle characteristics computed in '+str(time.time()-currT)+'s'
+                        except:
+                            print 'ERROR: No RTA angles calculated'
+                        
+                    if ifAnyKeyIsTrue(['STA_RANGE','STA_MIN','STA_MAX','STA_MED']):    
+                        try:
+                            print 'compute STA angles'
+                            currT=time.time()
+                            crownT['STA_RANGE'],crownT['STA_MED'],crownT['STA_MIN'],crownT['STA_MAX'],angles=analysis.getLateralAngles(path,lat,corrBranchpts,rtpSkel)
+                            print 'STA angles characteristics computed in '+str(time.time()-currT)+'s'
+                        except:
+                            print 'ERROR: No STA angles calculated'
+                            
+                    if ifAnyKeyIsTrue(['CP_DIA25','CP_DIA50','CP_DIA75','CP_DIA90']): 
+                        try:
+                            print 'compute diameter quantils'
+                            currT=time.time()
+                            crownT['CP_DIA25'],crownT['CP_DIA50'],crownT['CP_DIA75'],crownT['CP_DIA90']=analysis.getDiameterQuantilesAlongSinglePath(path,rtpSkel)
+                            print 'Tap diameters computed in '+str(time.time()-currT)+'s'
+                        except:
+                            print 'ERROR: No quantile diameters calculated'
+    
+                    if ifAnyKeyIsTrue(['STA_DOM_I','STA_DOM_II']):
+                        try:
+                            print 'compute STA dominant angles'
+                            currT=time.time()
+                            crownT['STA_DOM_I'],crownT['STA_DOM_II']=analysis.findHistoPeaks(angles)
+                            print 'STA dominant angles computed in '+str(time.time()-currT)+'s'
+                        except:
+                            print 'ERROR: No dominant angles calculated (STA)'
                     
-                try:
-                    print 'compute RTA angles'
-                    currT=time.time()
-                    angRange,avgAngle,minangle,maxAngle,angles=analysis.getLateralAngles(path,lat,corrBranchpts,rtpSkel)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except:
-                    raise
-                    avgAngle='nan'
-                    minangle='nan'
-                    maxAngle='nan'
-                    angRange='nan'
-                    angles='nan'
-                    print 'ERROR: No RTA angles calculated'
-                try:
-
-                    print 'compute diameter quantils'
-                    currT=time.time()
-                    d25,d50,d75,d90=analysis.getDiameterQuantilesAlongSinglePath(path,rtpSkel)
-                    print 'diameters computed in '+str(time.time()-currT)+'s'
-                except:
-                    d25='nan'
-                    d50='nan'
-                    d75='nan'
-                    d90='nan'
-                    print 'ERROR: No quantile angles calculated'
-                    raise
-
+                    if ifAnyKeyIsTrue(['STA_25_I','STA_25_II']): 
+                        try:
+                            currT=time.time() 
+                            crownT['STA_25_I'],crownT['STA_25_II']=analysis.findHistoPeaks(a25)
+                            print 'STA 25 angles computed in '+str(time.time()-currT)+'s'
+                        except:
+                            print 'ERROR: No dominant angles25 calculated'
+                    
+                    if ifAnyKeyIsTrue(['STA_50_I','STA_50_II']): 
+                        try:
+                            currT=time.time()
+                            crownT['STA_50_I'],crownT['STA_50_II']=analysis.findHistoPeaks(a50)
+                            print 'STA 50 angles computed in '+str(time.time()-currT)+'s'
+                        except:
+                            print 'ERROR: No dominant angles50 calculated'
+                    
+                    if ifAnyKeyIsTrue(['STA_75_I','STA_75_II']): 
+                        try:
+                            currT=time.time()     
+                            crownT['STA_75_I'],crownT['STA_75_II']=analysis.findHistoPeaks(a75)
+                            print 'STA 75 angles computed in '+str(time.time()-currT)+'s'
+                        except:
+                            print 'ERROR: No dominant angles75 calculated'
+                    
+                    if ifAnyKeyIsTrue(['STA_90_I','STA_90_II']): 
+                        try:
+                            currT=time.time()    
+                            crownT['STA_90_I'],crownT['STA_90_II']=analysis.findHistoPeaks(a90)
+                            print 'STA 90 angles computed in '+str(time.time()-currT)+'s'
+                        except: 
+                            print 'ERROR: No dominant angles90 calculated'
+                    
+                    if ifAnyKeyIsTrue(['RTA_DOM_I','RTA_DOM_II']):    
+                        try:   
+                            currT=time.time() 
+                            crownT['RTA_DOM_I'],crownT['RTA_DOM_II']=analysis.findHistoPeaks(anglesN)
+                            print 'angles computed in '+str(time.time()-currT)+'s'
+                        except: 
+                            print 'ERROR: No dominant RTA angles calculated'
                 
-                try:
-                    print 'compute dominant angles'
-                    currT=time.time()
-                    ang1,ang2=analysis.findHistoPeaks(angles)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except:
-                    ang1='nan'
-                    ang2='nan'
-                    print 'ERROR: No dominant angles calculated'
-                try:
-                    currT=time.time() 
-                    ang25_1,ang25_2=analysis.findHistoPeaks(a25)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except:
-                    ang25_1='nan'
-                    ang25_2='nan'
-                    print 'ERROR: No dominant angles25 calculated'
-                try:
-                    currT=time.time()
-                    ang50_1,ang50_2=analysis.findHistoPeaks(a50)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except:
-                    ang50_1='nan'
-                    ang50_2='nan'
-                    print 'ERROR: No dominant angles50 calculated'
-                try:
-                    currT=time.time()     
-                    ang75_1,ang75_2=analysis.findHistoPeaks(a75)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except:
-                    ang75_1='nan'
-                    ang75_2='nan'
-                    print 'ERROR: No dominant angles75 calculated'
-                try:
-                    currT=time.time()    
-                    ang90_1,ang90_2=analysis.findHistoPeaks(a90)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except: 
-                    ang90_1='nan'
-                    ang90_2='nan'
-                    print 'ERROR: No dominant angles90 calculated'
-                
-                try:   
-                    currT=time.time() 
-                    angN_1,angN_2=analysis.findHistoPeaks(anglesN)
-                    print 'angles computed in '+str(time.time()-currT)+'s'
-                except: 
-                    angN_1='nan'
-                    angN_2='nan'
-                    print 'ERROR: No dominant angles90 calculated'
-                
-                crownT=[stemDia,rootDensity,angRange,ang1,ang2,ang25_1,ang25_2,ang50_1,ang50_2,ang75_1,ang75_2,ang90_1,ang90_2,angN_1,angN_2,minangle,maxAngle,avgAngle,angRangeN,avgAngleN,minangleN,maxAngleN,nrOfRTP,medianTipDiameter,meanDiameter,dia90,medianWidth,maxWidth,D[0],D[1],D[2],D[3],D[4],D[5],D[6],D[7],D[8],DS[0],DS[1],DS[2],DS[3],DS[4],DS[5],DS[6],DS[7],DS[8],vecSym[0],vecSym[1],d25,d50,d75,d90]
 
-            else:
-                crownT=[stemDia,rootDensity,'nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan',medianWidth,maxWidth,D[0],D[1],D[2],D[3],D[4],D[5],D[6],D[7],D[8],DS[0],DS[1],DS[2],DS[3],DS[4],DS[5],DS[6],DS[7],DS[8],vecSym[0],vecSym[1],d25,d50,d75,d90]
-
-            if maxExRoot > 1:
-                for i in range(maxExRoot):
-                    allCrown.append(crownT)
-            else:
-                allCrown.append(crownT)    
-            if options[4][1] == '0':
-                lateralT=['nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan']
-                allLat.append(lateralT)
-    io.setHomePath(os.getcwd())
-
-def threadLateral(filepath):
-    tipdiameter=0.
+    rtpSkel=-1
     os.chdir(io.getHomePath())
-    io.setHomePath('./Lateral/')
+    io.setHomePath('../Lateral/')
     f=io.scanDir()
     for (counter,i) in enumerate(f):
         print 'processing lateral file: '+i
@@ -407,13 +457,11 @@ def threadLateral(filepath):
             io.setFileName(os.path.basename(i))
             io.setidIdx(counter)
     
-        rtp=RootTipPaths.RootTipPaths(io,tipdiameter)
-        rtp.setTipDiaFilter(tipdiameter)
+        rtp=RootTipPaths.RootTipPaths(io)
         
         analysis=Analysis.Analysis(io,(xScale+yScale)/2)
         
-        lateralT=[]
-
+        
         try:
             img=scipy.misc.imread(i,flatten=True)
         except:
@@ -429,31 +477,34 @@ def threadLateral(filepath):
                 skel=Skeleton.Skeleton(imgL)
                 testSkel,testDia=skel.skel(imgL)
                 path,skelGraph=seg.findThickestPathLateral(testSkel,testDia,xScale,yScale)
-                rtpSkel,_,medianD,meanD,_,_,rtps,_,_,_=rtp.getRTPSkeleton(path,skelGraph,True)
+                if ifAnyKeyIsTrue(['LT_AVG_LEN','NODAL_LEN','LT_BRA_FRQ','NODAL_AVG_DIA','LT_AVG_ANG','LT_ANG_RANGE','LT_MIN_ANG','LT_MAX_ANG','LT_DIST_FIRST','LT_MED_DIA','LT_AVG_DIA']):
+                    rtpSkel,_,crownT['LT_MED_DIA'],crownT['LT_AVG_DIA'],_,rtps,_,_,_=rtp.getRTPSkeleton(path,skelGraph,True)
                 
                 if rtpSkel!=-1:
-                    lBranchFreq=analysis.getBranchingfrequencyAlongSinglePath(rtps,path)
-                    avgLatDiameter,slope=analysis.getDiametersAlongSinglePath(path,rtpSkel,(xScale+yScale)/2)
-                    lengthNodalRoot=analysis.getLengthOfPath(path)
-                    lat,corrBranchpts,distToFirst=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
-                    avgLLength=analysis.getLateralLength(lat,path,rtpSkel)
-                    angRange,avgAngle,minangle,maxAngle,_=analysis.getLateralAngles(path,lat,corrBranchpts,rtpSkel)
-                    lateralT=[avgLLength*((xScale+yScale)/2),float(lengthNodalRoot)*((xScale+yScale)/2),lBranchFreq,avgLatDiameter,slope,avgAngle,angRange,minangle,maxAngle,float(distToFirst)*((xScale+yScale)/2),medianD,meanD]
-                else:
-                    lateralT=['nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan']
-            else:
-                lateralT=['nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan']
-            allLat.append(lateralT)
-            if options[5][1] == '0':
-                crownT=['nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan','nan']
-                allCrown.append(crownT)
+                    if ifAnyKeyIsTrue(['LT_BRA_FRQ']):
+                        crownT['LT_BRA_FRQ']=analysis.getBranchingfrequencyAlongSinglePath(rtps,path)
+                        crownT['NODAL_AVG_DIA'],_=analysis.getDiametersAlongSinglePath(path,rtpSkel,(xScale+yScale)/2)
+                        crownT['NODAL_LEN']=analysis.getLengthOfPath(path)
+                    if ifAnyKeyIsTrue(['LT_DIST_FIRST','LT_AVG_LEN','LT_BRA_FRQ','LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
+                        lat,corrBranchpts,crownT['LT_DIST_FIRST']=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
+                        if ifAnyKeyIsTrue(['LT_AVG_LEN']):
+                            crownT['LT_AVG_LEN']=analysis.getLateralLength(lat,path,rtpSkel)
+                        if ifAnyKeyIsTrue(['LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
+                            crownT['LT_ANG_RANGE'],crownT['LT_AVG_ANG'],crownT['LT_MIN_ANG'],crownT['LT_MAX_ANG'],_=analysis.getLateralAngles(path,lat,corrBranchpts,rtpSkel)
+        allCrown.append(crownT.copy())
+            
 
-    io.setHomePath(os.getcwd())   
 
+    if maxExRoot==0:
+        allCrown.append(crownT.copy())
+                
+                
+    os.chdir('../')
+   
 def printHeader():
-    if os.path.exists('./options.csv')==False and len(sys.argv)!=10:
+    if os.path.exists('./options.csv')==False and len(sys.argv)!=12:
         print '------------------------------------------------------------' 
-        print 'DIRT - An automatic highthroughput root phenotyping platform'
+        print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
         print '(c) 2014 Alexander Bucksch - bucksch@gatech.edu'
         print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
         print ' '
@@ -465,20 +516,22 @@ def printHeader():
         print '<run file path> full path to file with the root image'
         print '<unique id> ID which will be a folder name in theworking directory. Integer value needed'
         print '<mask threshold> multiplier for the automatically determned mask threshold. 1.0 works fine and is default. If flashlight is used, the 0.6 is a good choice.' 
-        print '<excised roots> number of roots placed at the right of the root crown, 0 - excised root analysis is off' 
+        print '<excised root> 1 - excised root analysis is on, 0 - excised root analysis is off' 
         print '<crown root> 1 - crown root analysis is on, 0 - crown root analysis is off' 
         print '<segmentation> 1 -  is on, 0 - is off' 
         print '<marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.'
-        print '<tip diameter filter> not active anymore, but can be used to consider only paths to tips of a certain size. We suggest to use 0'
+        print '<stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off'
+        print '<plots> 1 - plotting data is stored, 0 - plotting data is not stored'
         print '<working directory> full path to folder were the result is stored'
+        print '<trait file path> full path to .csv file containing the traits to be computed'
         print ' '
         print 'Example: '
-        print '/Users/image_folder/image_name.jpg 8 25.0 1 1 1 25.1 0 /Users/output_folder/'
+        print '/Documents/image_name.jpg 8 25.0 1 1 1 25.1 0 0 /Documents/image_folder/ /Documents/traits.csv'
         
         sys.exit()
     else:
         print '------------------------------------------------------------' 
-        print 'DIRT - An automatic highthroughput root phenotyping platform'
+        print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
         print '(c) 2014 Alexander Bucksch - bucksch@gatech.edu'
         print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
         print ' '
@@ -489,71 +542,67 @@ def printHeader():
         print ' '
         print 'Initializing folder structure'  
        
-if __name__ == '__main__':
+def main(opt=None): 
+    
+    global io
+    global ID
+    global scale 
+    global allPara
+    global allLat
+    global allCrown
+    global options
+    global maxExRoot
+    
+    printHeader()
     
     allStart=time.time()
     
-    printHeader()
-
-    #defs
-    options=readOptions()
-    f=options[0][1]+options[1][1]
+    if opt is None:
+        options = readOptions()  
+    else: options=opt
+    
     ID=int(options[2][1])
     
-    try: maskScaleThresh=float(options[3][1])
-    except: maskScaleThresh=10.
     try: scale = float(options[7][1])
     except: scale =1.
-    xScale=1
-    yScale=1
+    rootCrown=int(options[5][1])
     maxExRoot=int(options[4][1])
-    marker=True
-    if float(options[7][1])==0: marker=False 
-    io=IO.IO(options[0][1],ID=ID)
-    init(options[9][1]+str(ID)+'/',io)
+    io.__init__(options[0][1],ID=ID,plots=bool(int(options[9][1])))
+    init(options[10][1]+str(ID)+'/',io)
     
     #Run analysis
     if int(options[6][1]) == 0:
-        tipdiameter=0.
-        io.setHomePath(options[9][1]+str(ID)+'/')
+        io.setHomePath(options[10][1]+str(ID)+'/')
         print os.getcwd()
         infile=open(io.getHomePath()+'/tmp/para.sav','rb')
         allPara=pickle.load(infile)
         infile.close()
-        print 'Saved paremeters loaded'
+        print 'Saved parameters loaded'
         infile.close()
         
     elif int(options[6][1]) == 1:
-        threadSegmentation(options[9][1],options[1][1],ID,int(options[4][1]),float(options[7][1])>0.0)
+        threadSegmentation(options[10][1],options[1][1],ID,int(options[4][1]),rootCrown,float(options[7][1])>0.0)
         outfile=open(io.getHomePath()+'/tmp/para.sav','wb')
         pickle.dump(allPara,outfile)
         outfile.close()
     else: print'The segmentation switch must be 0 or 1'
     
-    if int(options[5][1]) == 1 and int(options[4][1]) == 0: 
+    if int(options[5][1]) != 0 or int(options[4][1]) != 0: 
         
-        print 'Start Crown Analysis'
-        threadCrown(options[9][1]+str(ID)+'/')
-        print "Exiting Crown Analysis"
+        print 'Start Root Analysis'
+        threadCrown(options[10][1]+str(ID)+'/')
+        print "Exiting Root Analysis"
         
-    if int(options[4][1]) >= 1 and int(options[5][1]) == 0:
-        print 'Start Lateral Analysis'
-        threadLateral(options[9][1]+str(ID)+'/')
-        print "Exiting Lateral Analysis"
-        
-    if int(options[5][1]) == 1 and int(options[4][1]) >= 1: 
-        print 'Start Crown Analysis'
-        threadCrown(options[9][1]+str(ID)+'/')
-        print 'Start Lateral Analysis'
-        threadLateral(options[9][1]+str(ID)+'/')
-        print "Exiting LAteral Analysis"
     
     compTime=int((time.time()-allStart))
     print 'All done in just '+str(compTime)+' s!'  
     print 'Write output.csv file'
-    r=len(allLat)
+    r=len(allCrown)
     if r==0: r=len(allCrown)
     for i in range(r):
         allPara[i][9]=compTime
-        io.writeFile(allPara[i], allCrown[i], allLat[i])
-  
+        io.writeFile(allPara[i], allCrown[i],traitDict)
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

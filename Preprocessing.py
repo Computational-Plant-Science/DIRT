@@ -1,8 +1,8 @@
 '''
 Preprocessing.py
 
-This module contains all imaiging operations to create input for analysis, 
-such as detecting the root in the image create and filter the biary image etc. 
+This module contains all imaging operations to create input for analysis, 
+such as detecting the root in the image create and filter the binary image etc. 
 
 The code is free for non-commercial use.
 Please contact the author for commercial use.
@@ -92,8 +92,9 @@ class Preprocessing(object):
         self.__w=0
         self.__tagCrop=10
         
-    def prepocess(self,img,scale=1.0,nrExRoot=1, marker=True):
+    def prepocess(self,img,rootCrown,scale=1.0,nrExRoot=1, marker=True, stemCorrection=False):
         print 'starting to segment'
+        rIdx=-1
         self.__io.setServerPath('./')
         circleIdx= circleRatio= circleWidth= circleHeight= imgCircle = 0
         Failed=False
@@ -104,11 +105,11 @@ class Preprocessing(object):
         imgLabel=self.calculateLabelHist(imgBinary)
 
         if marker== True: 
-                  print 'Marker is True'
-                  circleIdx, circleRatio, circleWidth, circleHeight, imgCircle =self.findCircle(imgLabel.copy())
+            print 'Marker is True'
+            circleIdx, circleRatio, circleWidth, circleHeight, imgCircle =self.findCircle(imgLabel.copy())
         else: 
-                  print 'Marker is False'
-                  circleIdx, circleRatio, circleWidth, circleHeight, imgCircle = -1, 1, 1, 1, None
+            print 'Marker is False'
+            circleIdx, circleRatio, circleWidth, circleHeight, imgCircle = -1, 1, 1, 1, None
         
         rectIdx, _, _, _,imgTag, tagText =self.findTag(imgLabel.copy() , imgBinary, orig, rect_ratio=5.)
        
@@ -124,14 +125,19 @@ class Preprocessing(object):
         '''
         These two functions belong together and have to be called right after each other. I know, that is bad.
         '''
-        rIdx,rIdxList,crownMin,crownMax,crownBottom,crownTop=self.findRoot(imgLabel.copy()) 
-        imgRoot=self.correctForStem(imgLabel.copy(), [circleIdx,rectIdx,rIdx], crownMin, crownMax, crownBottom, crownTop, rIdx, rIdxList)
-
+        if rootCrown==True:
+            rIdx,rIdxList,crownMin,crownMax,crownBottom,crownTop=self.findRoot(imgLabel.copy()) 
+            if stemCorrection== True: 
+                print 'Stem reconstruction is active '
+                imgRoot=self.correctForStem(imgLabel.copy(), [circleIdx,rectIdx,rIdx], crownMin, crownMax, crownBottom, crownTop, rIdx, rIdxList)
+            else:
+                print 'No stem reconstruction active' 
+                imgRoot=imgBinary[crownMax:crownMin,crownBottom:crownTop]
         
-        if nrExRoot >1:
+        if nrExRoot >1 and rootCrown==True:
 
             for i in range(nrExRoot): 
-                exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMax)
+                exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMin,crownMax)
                 if exRIdx != -1:
                     print 'found excised root '+str(i)
                     try: 
@@ -149,7 +155,7 @@ class Preprocessing(object):
                     except: 
                         print 'NOT SAVED !!!!'
                         raise
-        elif nrExRoot ==1: 
+        elif nrExRoot ==1 and rootCrown==True: 
             exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMin,crownMax)
             if exRIdx != -1:
                 print 'found the excised root '
@@ -162,6 +168,21 @@ class Preprocessing(object):
                     print 'excised root saved Server'
                     os.chdir(pathold)
                 except: print 'NOT SAVED !!!!'
+        elif nrExRoot ==1 and rootCrown==False:
+            exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx],0,1)
+            if exRIdx != -1:
+                print 'found the excised root '
+                rIdx=-1
+                try: 
+                    pathold=os.getcwd()
+                    os.chdir(self.__io.getHomePath())
+                    scipy.misc.imsave(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
+                    print 'excised root saved' 
+                    self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Lateral/'+self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png,' +str(self.__io.getID())+',0')
+                    print 'excised root saved Server'
+                    os.chdir(pathold)
+                except: print 'NOT SAVED !!!!'
+            
         print 'saving binary mask'
         scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
         if marker==True:
@@ -180,7 +201,6 @@ class Preprocessing(object):
             '''
             try:
                 print 'root image to be saved'
-                print np.unique(imgRoot)
                 scipy.misc.imsave(self.__io.getHomePath()+'/Crown/' + self.__io.getFileName()+'.png', imgRoot)
             except: 
                 print 'CROWN NOT SAVED'

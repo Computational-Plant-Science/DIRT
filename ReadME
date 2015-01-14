@@ -1,5 +1,5 @@
 ------------------------------------------------------------
-DIRT 1.0 - An automatic highthroughput root phenotyping platform
+DIRT 1.1 - An automatic high throughput root phenotyping platform
 (c) 2014 Alexander Bucksch - bucksch@gatech.edu
 Web application by Abhiram Das - adas30@biology.gatech.edu
 
@@ -26,7 +26,6 @@ paths have to be adjusted in /DIRTocr/pytesser.py (line 12-14)
 path has to be adjusted in /DIRTocr/__init__.py (line 28)
 
 Usage:
-
 <run file path> full path to the root image
 <unique id> ID which will be a folder name in the working directory. Integer value needed.
 <mask threshold> multiplier for the automatically determined mask threshold. 1.0 works fine and is default. For example, if a flashlight is used to take root images, then 0.6 is a good choice.
@@ -34,13 +33,18 @@ Usage:
 <crown root> 1 - crown root analysis is on, 0 - crown root analysis is off
 <segmentation> 1 -  is on, 0 - is off
 <marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.
-<tip diameter filter> not active anymore, but can be used to consider only paths to tips of a certain size. We suggest to use 0
+<stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off
+<plots> 1 - plotting data is stored, 0 - plotting data is not stored
 <working directory> full path to folder were the result is stored
+<trait file path> full path to .csv file containing the traits to be computed'
 
 Example: 
-python main.py /Users/image_folder/image_name.jpg 8 25.0 1 1 1 25.1 0 /Users/output_folder/
+python main.py /Documents/image_name.jpg 8 25.0 1 1 1 25.1 0 0 /Documents/image_folder/ /Documents/traits.csv
 
-Input is restricted to .jpg, .png and .tif images
+Notes on common questions:
+- Input is restricted to .jpg, .png and .tif images
+- It is not possible to analyze soley an excised root when a root crown is in the image. However, it is possible to analyze compute images containing only excised roots.
+
 ------------------------------------------------------------
 
 For convenience we provide the runOnFolder script, that executes DIRT on all images in a specified folder.
@@ -50,3 +54,16 @@ Example: python runOnFolder.py /Users/image_folder/
 Please adjust line 86 according to the description above and note that the script uses 6 cores to compute images in parallel. The number of cores can be adjusted in line 80.
 
 ------------------------------------------------------------
+
+Changes in DIRT 1.1 (10 January 2015):
+------------------------------------------------------------
+- storage of trait values is changed from a list data structure to a dictionary to allow trait selection controlled by the file traits.csv
+- added support for trait selection to reduce computation time. See example file traits.csv (1 - trait is computed, 0 - trait is not computed)
+- removed unused tip-diameter switch on the command line
+- add stem reconstruction switch on the command line to turn the experimental stem reconstruction on/off
+- output file now uses the codes in the trait.csv file and only contains selected traits
+- removed several unused variables and minor bugs fixed
+- added command line option to turn storage of numpy arrays on/off. These files can be used to plot the individual root statistics and can be found in the "Plots" folders.
+- new (experimental, unvalidated) traits added due to community requests: projected root area, width and depth of the skeleton (medial axis), top and bottom angle for monocots, segmentation of adventious and basal roots for legumes to retrieve taproot and hypocotyl diameter and adventious and basal root counts.
+- added computational statistics such as computation time and graph size to help balancing grid installations
+ 
