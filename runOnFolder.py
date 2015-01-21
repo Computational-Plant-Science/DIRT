@@ -30,7 +30,7 @@ if __name__ == '__main__':
     dir=sys.argv[1]  
     seg=sys.argv[2]  
     files=os.listdir(dir)
-    pool = multiprocessing.Pool(processes=16)
+    pool = multiprocessing.Pool(processes=8)
     args=[]
     for idx,i in enumerate(files): 
         if i !='.DS_Store':

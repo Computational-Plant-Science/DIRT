@@ -337,6 +337,10 @@ def threadCrown(filepath):
                         scipy.misc.imsave(io.getHomePath()+'/Result/' +io.getFileName()+ 'Seg2.png', segImg)
                         crownT['ADVT_COUNT'],crownT['BASAL_COUNT'],crownT['NR_RTP_SEG_I'],crownT['NR_RTP_SEG_II'], crownT['HYP_DIA'], crownT['TAP_DIA'] =analysis.countRootsPerSegment(c1y,c2y,c1x,c2x)
                     except:
+                        c1x=None
+                        c1y=None
+                        c2x=None
+                        c2y=None
                         pass
                     crownT['DROP_50']=analysis.RTPsOverDepth(path,rtpSkel)
                     print 'count roots per segment'
@@ -348,7 +352,10 @@ def threadCrown(filepath):
                     print 'seg.findLaterals computed in '+str(time.time()-currT)+'s'
                     print 'Compute angles at 2cm'
                     currT=time.time()
-                    crownT['ADVT_ANG'],crownT['BASAL_ANG']=analysis.anglesPerClusterAtDist(c1y, c2y, rtpSkel, path, lat, corrBranchpts, (xScale+yScale)/2, dist=20)
+                    if c1x!=None and c1y!=None and c2x!=None and c2y!=None: crownT['ADVT_ANG'],crownT['BASAL_ANG']=analysis.anglesPerClusterAtDist(c1y, c2y, rtpSkel, path, lat, corrBranchpts, (xScale+yScale)/2, dist=20)
+                    else: 
+                        crownT['ADVT_ANG']='nan'
+                        crownT['BASAL_NG']='nan'
                     print 'angles at 2cm computed in '+str(time.time()-currT)+'s'
                     
                     if ifAnyKeyIsTrue(['STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II']):    
@@ -440,62 +447,59 @@ def threadCrown(filepath):
                         except: 
                             print 'ERROR: No dominant RTA angles calculated'
                 
-
-    rtpSkel=-1
-    os.chdir(io.getHomePath())
-    io.setHomePath('../Lateral/')
-    f=io.scanDir()
-    for (counter,i) in enumerate(f):
-        print 'processing lateral file: '+i
-        if maxExRoot>0:
-            xScale=allPara[counter/maxExRoot][7]
-            yScale=allPara[counter/maxExRoot][8]
-            io.setFileName(os.path.basename(i))
-        else:
-            xScale=allPara[counter][7]
-            yScale=allPara[counter][8] 
-            io.setFileName(os.path.basename(i))
-            io.setidIdx(counter)
-    
-        rtp=RootTipPaths.RootTipPaths(io)
+    if maxExRoot >= 1:
+        rtpSkel=-1
+        os.chdir(io.getHomePath())
+        io.setHomePath('../Lateral/')
+        f=io.scanDir()
+        for (counter,i) in enumerate(f):
+            print 'processing lateral file: '+i
+            if maxExRoot>0:
+                xScale=allPara[counter/maxExRoot][7]
+                yScale=allPara[counter/maxExRoot][8]
+                io.setFileName(os.path.basename(i))
+            else:
+                xScale=allPara[counter][7]
+                yScale=allPara[counter][8] 
+                io.setFileName(os.path.basename(i))
+                io.setidIdx(counter)
         
-        analysis=Analysis.Analysis(io,(xScale+yScale)/2)
-        
-        
-        try:
-            img=scipy.misc.imread(i,flatten=True)
-        except:
-            print 'Image not readable'
-            img=[]
-            pass
-        if len(img)>0:
-
-            seg=Segmentation.Segmentation(img,io=io)
-            imgL=seg.label()
-
-            if imgL!=None:
-                skel=Skeleton.Skeleton(imgL)
-                testSkel,testDia=skel.skel(imgL)
-                path,skelGraph=seg.findThickestPathLateral(testSkel,testDia,xScale,yScale)
-                if ifAnyKeyIsTrue(['LT_AVG_LEN','NODAL_LEN','LT_BRA_FRQ','NODAL_AVG_DIA','LT_AVG_ANG','LT_ANG_RANGE','LT_MIN_ANG','LT_MAX_ANG','LT_DIST_FIRST','LT_MED_DIA','LT_AVG_DIA']):
-                    rtpSkel,_,crownT['LT_MED_DIA'],crownT['LT_AVG_DIA'],_,rtps,_,_,_=rtp.getRTPSkeleton(path,skelGraph,True)
-                
-                if rtpSkel!=-1:
-                    if ifAnyKeyIsTrue(['LT_BRA_FRQ']):
-                        crownT['LT_BRA_FRQ']=analysis.getBranchingfrequencyAlongSinglePath(rtps,path)
-                        crownT['NODAL_AVG_DIA'],_=analysis.getDiametersAlongSinglePath(path,rtpSkel,(xScale+yScale)/2)
-                        crownT['NODAL_LEN']=analysis.getLengthOfPath(path)
-                    if ifAnyKeyIsTrue(['LT_DIST_FIRST','LT_AVG_LEN','LT_BRA_FRQ','LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
-                        lat,corrBranchpts,crownT['LT_DIST_FIRST']=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
-                        if ifAnyKeyIsTrue(['LT_AVG_LEN']):
-                            crownT['LT_AVG_LEN']=analysis.getLateralLength(lat,path,rtpSkel)
-                        if ifAnyKeyIsTrue(['LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
-                            crownT['LT_ANG_RANGE'],crownT['LT_AVG_ANG'],crownT['LT_MIN_ANG'],crownT['LT_MAX_ANG'],_=analysis.getLateralAngles(path,lat,corrBranchpts,rtpSkel)
-        allCrown.append(crownT.copy())
+            rtp=RootTipPaths.RootTipPaths(io)
             
-
-
-    if maxExRoot==0:
+            analysis=Analysis.Analysis(io,(xScale+yScale)/2)
+            
+            
+            try:
+                img=scipy.misc.imread(i,flatten=True)
+            except:
+                print 'Image not readable'
+                img=[]
+                pass
+            if len(img)>0:
+    
+                seg=Segmentation.Segmentation(img,io=io)
+                imgL=seg.label()
+    
+                if imgL!=None:
+                    skel=Skeleton.Skeleton(imgL)
+                    testSkel,testDia=skel.skel(imgL)
+                    path,skelGraph=seg.findThickestPathLateral(testSkel,testDia,xScale,yScale)
+                    if ifAnyKeyIsTrue(['LT_AVG_LEN','NODAL_LEN','LT_BRA_FRQ','NODAL_AVG_DIA','LT_AVG_ANG','LT_ANG_RANGE','LT_MIN_ANG','LT_MAX_ANG','LT_DIST_FIRST','LT_MED_DIA','LT_AVG_DIA']):
+                        rtpSkel,_,crownT['LT_MED_DIA'],crownT['LT_AVG_DIA'],_,rtps,_,_,_=rtp.getRTPSkeleton(path,skelGraph,True)
+                    
+                    if rtpSkel!=-1:
+                        if ifAnyKeyIsTrue(['LT_BRA_FRQ']):
+                            crownT['LT_BRA_FRQ']=analysis.getBranchingfrequencyAlongSinglePath(rtps,path)
+                            crownT['NODAL_AVG_DIA'],_=analysis.getDiametersAlongSinglePath(path,rtpSkel,(xScale+yScale)/2)
+                            crownT['NODAL_LEN']=analysis.getLengthOfPath(path)
+                        if ifAnyKeyIsTrue(['LT_DIST_FIRST','LT_AVG_LEN','LT_BRA_FRQ','LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
+                            lat,corrBranchpts,crownT['LT_DIST_FIRST']=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
+                            if ifAnyKeyIsTrue(['LT_AVG_LEN']):
+                                crownT['LT_AVG_LEN']=analysis.getLateralLength(lat,path,rtpSkel)
+                            if ifAnyKeyIsTrue(['LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
+                                crownT['LT_ANG_RANGE'],crownT['LT_AVG_ANG'],crownT['LT_MIN_ANG'],crownT['LT_MAX_ANG'],_=analysis.getLateralAngles(path,lat,corrBranchpts,rtpSkel)
+            allCrown.append(crownT.copy())
+    else:
         allCrown.append(crownT.copy())
                 
                 

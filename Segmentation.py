@@ -151,13 +151,9 @@ class Segmentation(object):
         print 'Number of components: ' + str(nr_objects)
         #if nr_objects>2: return None
         if nr_objects==0: return None
-        val = []
-        for i in labeled:
-            for j in i:
-                val.append(j)
+        val=labeled.flatten()
         hist = []
-        for i in range(np.max(val) + 1):
-            hist.append(i)
+        hist+=range(np.max(val) + 1)
         test, _ = np.histogram(val, hist)
         comp1 = np.max(test)
         idx1 = list(test).index(comp1)
