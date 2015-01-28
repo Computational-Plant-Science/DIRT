@@ -43,9 +43,9 @@ python main.py /Users/image_folder/image_name.jpg 8 25.0 1 1 1 25.1 0 /Users/out
 Input is restricted to .jpg, .png and .tif images
 ------------------------------------------------------------
 
-For convenience we provide the runOnFolder script, that executes DIRT on all images in a specified folder.
+For convenience we provide the runOnFolder script, that executes DIRT on all images in a specified folder. Note we made the masking threshhold availbale on the command line because of user requests.
 
-Example: python runOnFolder.py /Users/image_folder/
+Example: python runOnFolder.py /Users/image_folder/ <masking threshold>
 
 Please adjust line 86 according to the description above and note that the script uses 6 cores to compute images in parallel. The number of cores can be adjusted in line 80.
 
