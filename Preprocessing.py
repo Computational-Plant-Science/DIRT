@@ -104,6 +104,8 @@ class Preprocessing(object):
         imgBinary=mask.calculateMask(imgGrey)
         print 'saving binary mask'
         scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
+        os.chdir(self.__io.getHomePath())
+        self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
         imgLabel=self.calculateLabelHist(imgBinary)
 
         if marker== True: 
@@ -191,7 +193,7 @@ class Preprocessing(object):
             scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Tag.png', imgTag)
         pathold=os.getcwd()
         os.chdir(self.__io.getHomePath())
-        self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
+        
         if marker==True: 
             self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'Circle.png,' +str(self.__io.getID())+',0')
             
