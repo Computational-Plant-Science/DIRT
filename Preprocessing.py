@@ -104,8 +104,10 @@ class Preprocessing(object):
         imgBinary=mask.calculateMask(imgGrey)
         print 'saving binary mask'
         scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
+        pathold=os.getcwd()
         os.chdir(self.__io.getHomePath())
         self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
+        os.chdir(pathold)
         imgLabel=self.calculateLabelHist(imgBinary)
 
         if marker== True: 
