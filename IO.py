@@ -88,50 +88,6 @@ class IO(object):
         self.__path = homePath
         self.__name = name
         self.__serverPath=None
-        self.__traitsCrown=['stemDia','simple stemDia','projected root area','avg. Root Density', 
-                 'Root Top Angle',
-                 'Root Bottom Angle',
-                 'STA range', 
-                 'STA dom. angle 1', 
-                 'STA dom. angle 2',' STA 25% 1','STA 25% 2','STA 50% 1','STA 50% 2','STA 75% 1','STA 75% 2','STA 90% 1','STA 90% 2',
-                 'RTA dom. angle 1', 
-                 'RTA dom. angle 2',
-                 'STA min.',
-                 'STA max.',
-                 'STA median',
-                 'RTA range',
-                 'RTA min.',
-                 'RTA max.',
-                 'RTA median',
-                 'Nr. of RTPs', 
-                 'rootsSeg1',
-                 'RootsSeg2',
-                 'nrAdvRoots',
-                 'nrBasRoots',
-                 'angAdv',
-                 'angBas',
-                 'TD median',
-                 'TD mean',
-                 'Hypocotyl dia',
-                 'Taproot dia',
-                 'DD90 max.',
-                 '50\% drop',
-                 'median Width','max. Width','D10','D20','D30','D40','D50','D60','D70','D80','D90','DS10','DS20','DS30','DS40','DS50','DS60','DS70','DS80','DS90',
-                 'spatial root distr. X','spatial root distr. Y','CPD 25','CPD 50','CPD 75','CPD 90','Skel Width','rooting depth Skel']
-
-        self.__traitsLateral=['avg. lateral length',
-                       'nodal root path length',
-                       'lateral branching frequency',
-                       'avg. nodal root diameter',
-                       'nodal root shape',
-                       'lateral avg. angle',
-                       'lateral angular range',
-                       'lateral min. angle',
-                       'lateral max. angle',
-                       'dist to first lateral',
-                       'median lateral diameter','mean lateral diameter','exponent e^x of diameter',
-                       ]
-        
         self.__parameters=['Image ID','Image name','Failed',
                            'Experiment number',
                     'circle ratio',
@@ -222,7 +178,8 @@ class IO(object):
                     fout.write(str(i)+',')
             for k,v in traitDict.iteritems():
                 if v==True:
-                    fout.write(str(k)+',')
+                    if k in traitsCrown:
+                        fout.write(str(k)+',')
             fout.write('\n')
             
 
@@ -230,7 +187,7 @@ class IO(object):
         for i in para:
                     fout.write(str(i)+',')
         for k,v in traitDict.iteritems():
-                if v==True:
+                if v==True and k in traitsCrown:
                     fout.write(str(traitsCrown[k])+',')
         fout.write('\n')
         fout.close()

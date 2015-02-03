@@ -102,6 +102,8 @@ class Preprocessing(object):
         mask=Masking.Masking(scale=scale)
         imgGrey = img.astype(np.uint8)
         imgBinary=mask.calculateMask(imgGrey)
+        print 'saving binary mask'
+        scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
         imgLabel=self.calculateLabelHist(imgBinary)
 
         if marker== True: 
@@ -183,8 +185,7 @@ class Preprocessing(object):
                     os.chdir(pathold)
                 except: print 'NOT SAVED !!!!'
             
-        print 'saving binary mask'
-        scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
+        
         if marker==True:
             scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Circle.png', imgCircle)
             scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Tag.png', imgTag)
