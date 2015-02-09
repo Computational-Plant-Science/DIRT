@@ -157,7 +157,7 @@ def init(fpath,io):
             os.mkdir('./Crown/Result/')
     
     os.chdir(oldpath)
-    readTraits(options[11][1])
+    readTraits(options[12][1])
 def readTraits(myFilePath='./traits.csv'):
     global traitDict
     #check to make sure its a file not a sub folder
@@ -179,7 +179,7 @@ def readTraits(myFilePath='./traits.csv'):
     
 def readOptions():
     global options
-    if len(sys.argv)==12:
+    if len(sys.argv)==13:
         options.append([0,os.path.dirname(sys.argv[1])+'/'])
         options.append([0,os.path.basename(sys.argv[1])])
         options.append([0,sys.argv[2]])
@@ -192,6 +192,7 @@ def readOptions():
         options.append([0,sys.argv[9]])
         options.append([0,sys.argv[10]])
         options.append([0,sys.argv[11]])
+        options.append([0,sys.argv[12]])
 
     else:
         with open('./options.csv','U') as csvfile: 
@@ -293,7 +294,7 @@ def threadCrown(filepath):
                 crownT['AVG_DENSITY'],crownT['WIDTH_MED'],crownT['WIDTH_MAX'],crownT['D10'],crownT['D20'],crownT['D30'],crownT['D40'],crownT['D50'],crownT['D60'],crownT['D70'],crownT['D80'],crownT['D90'],crownT['DS10'],crownT['DS20'],crownT['DS30'],crownT['DS40'],crownT['DS50'],crownT['DS60'],crownT['DS70'],crownT['DS80'],crownT['DS90'],crownT['AREA'],crownT['DIA_STM_SIMPLE'],crownT['ANG_TOP'],crownT['ANG_BTM']=analysis.getWidthOverHeight(imgL,xScale,yScale)
                 print 'Mask traits computed '+str(time.time()-currT)+'s'
             
-            if ifAnyKeyIsTrue(['DIA_STM','TD_MED','TD_AVG','STA_RANGE','FD_STA','SD_STA','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_I','RTA_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED','NR_RTP_SEG_I','NR_RTP_SEG_II','ADVT_COUNT','BASAL_COUNT','ADVT_ANG','BASAL_ANG','HYP_DIA','TAP_DIA','MAX_DIA_90','DROP_50','CP_DIA25','CP_DIA50','CP_DIA75','CP_DIA90','SKL_DEPTH','SKL_WIDTH']):
+            if ifAnyKeyIsTrue(['DIA_STM','TD_MED','TD_AVG','STA_RANGE','STA_DOM_I','STA_DOM_II','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_DOM_I','RTA_DOM_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED','NR_RTP_SEG_I','NR_RTP_SEG_II','ADVT_COUNT','BASAL_COUNT','ADVT_ANG','BASAL_ANG','HYP_DIA','TAP_DIA','MAX_DIA_90','DROP_50','CP_DIA25','CP_DIA50','CP_DIA75','CP_DIA90','SKL_DEPTH','SKL_WIDTH']):
                 currT=time.time()
                 skel=Skeleton.Skeleton(imgL)
                 testSkel,testDia=skel.skel(imgL)
@@ -303,7 +304,7 @@ def threadCrown(filepath):
                 allPara[counter][10]=skelSize
                 print 'Central path computed '+str(time.time()-currT)+'s'
                 
-            if ifAnyKeyIsTrue(['TD_MED','TD_AVG','STA_RANGE','FD_STA','SD_STA','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_I','RTA_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED','NR_RTP_SEG_I','NR_RTP_SEG_II','ADVT_COUNT','BASAL_COUNT','ADVT_ANG','BASAL_ANG','HYP_DIA','TAP_DIA','MAX_DIA_90','DROP_50','CP_DIA25','CP_DIA50','CP_DIA75','CP_DIA90','SKL_DEPTH','SKL_WIDTH','RTP_COUNT']):
+            if ifAnyKeyIsTrue(['TD_MED','TD_AVG','STA_RANGE','STA_DOM_I','STA_DOM_II','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_DOM_I','RTA_DOM_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED','NR_RTP_SEG_I','NR_RTP_SEG_II','ADVT_COUNT','BASAL_COUNT','ADVT_ANG','BASAL_ANG','HYP_DIA','TAP_DIA','MAX_DIA_90','DROP_50','CP_DIA25','CP_DIA50','CP_DIA75','CP_DIA90','SKL_DEPTH','SKL_WIDTH','RTP_COUNT']):
                 print 'Compute RTP skeleton'
                 currT=time.time()
                 rtpSkel,crownT['RTP_COUNT'], crownT['TD_MED'],crownT['TD_AVG'],crownT['MAX_DIA_90'], rtps, tips, crownT['SKL_WIDTH'], crownT['SKL_DEPTH'] =rtp.getRTPSkeleton(path,skelGraph,True)
@@ -506,7 +507,7 @@ def threadCrown(filepath):
     os.chdir('../')
    
 def printHeader():
-    if os.path.exists('./options.csv')==False and len(sys.argv)!=12:
+    if os.path.exists('./options.csv')==False and len(sys.argv)!=13:
         print '------------------------------------------------------------' 
         print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
         print '(c) 2014 Alexander Bucksch - bucksch@gatech.edu'
@@ -572,11 +573,11 @@ def main(opt=None):
     rootCrown=int(options[5][1])
     maxExRoot=int(options[4][1])
     io.__init__(options[0][1],ID=ID,plots=bool(int(options[9][1])))
-    init(options[10][1]+str(ID)+'/',io)
+    init(options[11][1]+str(ID)+'/',io)
     
     #Run analysis
     if int(options[6][1]) == 0:
-        io.setHomePath(options[10][1]+str(ID)+'/')
+        io.setHomePath(options[11][1]+str(ID)+'/')
         print os.getcwd()
         infile=open(io.getHomePath()+'/tmp/para.sav','rb')
         allPara=pickle.load(infile)
@@ -585,7 +586,7 @@ def main(opt=None):
         infile.close()
         
     elif int(options[6][1]) == 1:
-        threadSegmentation(options[10][1],options[1][1],ID,int(options[4][1]),rootCrown,float(options[7][1])>0.0)
+        threadSegmentation(options[11][1],options[1][1],ID,int(options[4][1]),rootCrown,float(options[7][1])>0.0)
         outfile=open(io.getHomePath()+'/tmp/para.sav','wb')
         pickle.dump(allPara,outfile)
         outfile.close()
@@ -594,7 +595,7 @@ def main(opt=None):
     if int(options[5][1]) != 0 or int(options[4][1]) != 0: 
         
         print 'Start Root Analysis'
-        threadCrown(options[10][1]+str(ID)+'/')
+        threadCrown(options[11][1]+str(ID)+'/')
         print "Exiting Root Analysis"
         
     
@@ -605,7 +606,7 @@ def main(opt=None):
     if r==0: r=len(allCrown)
     for i in range(r):
         allPara[i][9]=compTime
-        io.writeFile(allPara[i], allCrown[i],traitDict)
+        io.writeFile(allPara[i], allCrown[i],traitDict,int(options[10][1]))
     return 0
 
 if __name__ == '__main__':

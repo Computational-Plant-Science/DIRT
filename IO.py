@@ -167,7 +167,7 @@ class IO(object):
         fout.write(runfile+', '+string)
         fout.write('\n')
         fout.close()
-    def writeFile(self,para,traitsCrown,traitDict):
+    def writeFile(self,para,traitsCrown,traitDict,all=False):
         try:
             if os.path.isfile(self.__serverPath+"/output.csv"):
                 fout=open(self.__serverPath+"/output.csv", "a")
@@ -177,9 +177,14 @@ class IO(object):
             for i in self.__parameters:
                     fout.write(str(i)+',')
             for k,v in traitDict.iteritems():
-                if v==True:
-                    if k in traitsCrown:
-                        fout.write(str(k)+',')
+                if all==False:
+                    if v==True:
+                        if k in traitsCrown:
+                            fout.write(str(k)+',')
+                else:
+                    fout.write(str(k)+',')
+                    
+                    
             fout.write('\n')
             
 
@@ -189,6 +194,9 @@ class IO(object):
         for k,v in traitDict.iteritems():
                 if v==True and k in traitsCrown:
                     fout.write(str(traitsCrown[k])+',')
+                elif all==True:
+                    fout.write(str(' ,'))
+                
         fout.write('\n')
         fout.close()
         

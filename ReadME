@@ -35,20 +35,21 @@ Usage:
 <marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.
 <stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off
 <plots> 1 - plotting data is stored, 0 - plotting data is not stored
+<output format> 1 - the full trait set is put into one excel file containing empty cells for traits that were not computed, 0 - only computed files are written to the output file
 <working directory> full path to folder were the result is stored
 <trait file path> full path to .csv file containing the traits to be computed'
 
 Example: 
-python main.py /Documents/image_name.jpg 8 25.0 1 1 1 25.1 0 0 /Documents/image_folder/ /Documents/traits.csv
+python main.py /Documents/image_name.jpg 8 25.0 1 1 1 25.1 0 0 0 /Documents/image_folder/ /Documents/traits.csv
 
 Notes on common questions:
 - Input is restricted to .jpg, .png and .tif images
-- It is not possible to analyze soley an excised root when a root crown is in the image. However, it is possible to analyze compute images containing only excised roots.
+- It is not possible to analyze only an excised root when a root crown is in the image. However, it is possible to analyze compute images containing only excised roots.
 
 ------------------------------------------------------------
 
 For convenience we provide the runOnFolder script, that executes DIRT on all images in a specified folder. 
-Note we made the masking threshhold availbale on the command line because of user requests.
+Note we made the masking threshold available on the command line because of user requests.
 
 Example: python runOnFolder.py /Users/image_folder/ <masking threshold>
 
@@ -65,6 +66,6 @@ Changes in DIRT 1.1 (14 January 2015):
 - output file now uses the codes in the trait.csv file and only contains selected traits
 - removed several unused variables and minor bugs fixed
 - added command line option to turn storage of numpy arrays on/off. These files can be used to plot the individual root statistics and can be found in the "Plots" folders.
-- new (experimental, unvalidated) traits added due to community requests: projected root area, width and depth of the skeleton (medial axis), top and bottom angle for monocots, segmentation of adventious and basal roots for legumes to retrieve taproot and hypocotyl diameter and adventious and basal root counts.
+- new (experimental, not validated) traits added due to community requests: projected root area, width and depth of the skeleton (medial axis), top and bottom angle for monocots, segmentation of adventious and basal roots for legumes to retrieve taproot and hypocotyl diameter and adventious and basal root counts.
 - added computational statistics such as computation time and graph size to help balancing grid installations
- 
+- added an option to have an output file with all possible traits that contains empty cells for not computed traits in the output.csv file. This was a developer request to enable faster ingestion into data bases
