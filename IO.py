@@ -169,7 +169,7 @@ class IO(object):
         fout.write('\n')
         fout.close()
     def writeFile(self,para,traitsCrown,traitDict,all=False):
-
+        print "output directory: "+self.__path+"/output.csv"
         try:
             if os.path.isfile(self.__path+"/output.csv"):
                 fout=open(self.__path+"/output.csv", "a")
