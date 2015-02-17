@@ -137,6 +137,8 @@ class IO(object):
     
     def writeServerFile(self,serverFile,string):
         path=self.__serverPath
+        print "server file (working directory): "+str(os.getcwd())
+        print "server file (relative): "+str(path)
         try:
             if os.path.isfile(path+serverFile):
                 fout=open(path+serverFile, "a")
@@ -168,6 +170,8 @@ class IO(object):
         fout.write('\n')
         fout.close()
     def writeFile(self,para,traitsCrown,traitDict,all=False):
+        print "output file (working directory): "+str(os.getcwd())
+        print "output file (relative): "+str(self.__serverPath)
         try:
             if os.path.isfile(self.__serverPath+"/output.csv"):
                 fout=open(self.__serverPath+"/output.csv", "a")
