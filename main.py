@@ -265,6 +265,7 @@ def threadCrown(filepath):
     stemCorrection=bool(int(options[8][1]))
     
     print io.getHomePath()
+    oldHome=io.getHomePath()
     os.chdir(io.getHomePath())
     io.setHomePath('./Crown/')
     f=io.scanDir()
@@ -447,11 +448,11 @@ def threadCrown(filepath):
                             print 'angles computed in '+str(time.time()-currT)+'s'
                         except: 
                             print 'ERROR: No dominant RTA angles calculated'
-                
+    io.setHomePath(oldHome)            
     if maxExRoot >= 1:
         rtpSkel=-1
         os.chdir(io.getHomePath())
-        io.setHomePath('../Lateral/')
+        io.setHomePath('./Lateral/')
         f=io.scanDir()
         for (counter,i) in enumerate(f):
             print 'processing lateral file: '+i
@@ -503,8 +504,8 @@ def threadCrown(filepath):
     else:
         allCrown.append(crownT.copy())
                 
-                
-    os.chdir('../')
+    io.setHomePath(oldHome)     
+    #os.chdir('../')
    
 def printHeader():
     if os.path.exists('./options.csv')==False and len(sys.argv)!=13:

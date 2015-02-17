@@ -171,11 +171,11 @@ class IO(object):
     def writeFile(self,para,traitsCrown,traitDict,all=False):
 
         try:
-            if os.path.isfile(os.getcwd()+"/"+self.__id+"/output.csv"):
-                fout=open(os.getcwd()+"/"+self.__id+"/output.csv", "a")
+            if os.path.isfile(self.__path+"/output.csv"):
+                fout=open(self.__path+"/output.csv", "a")
             else: raise
         except:
-            fout = open(os.getcwd()+"/"+self.__id+"/output.csv", "w")
+            fout = open(self.__path+"/output.csv", "w")
             for i in self.__parameters:
                     fout.write(str(i)+',')
             for k,v in traitDict.iteritems():

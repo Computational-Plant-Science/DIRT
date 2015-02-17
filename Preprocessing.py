@@ -193,13 +193,13 @@ class Preprocessing(object):
         if marker==True:
             scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Circle.png', imgCircle)
             scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Tag.png', imgTag)
-        pathold=os.getcwd()
-        os.chdir(self.__io.getHomePath())
+        #pathold=os.getcwd()
+        #os.chdir(self.__io.getHomePath())
         
         if marker==True: 
             self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'Circle.png,' +str(self.__io.getID())+',0')
             
-        os.chdir(pathold)
+        #os.chdir(pathold)
         if rIdx != -1:
             '''
             If image is usable, then it gets segmented and copied. Otherwise we ignore it
@@ -217,7 +217,7 @@ class Preprocessing(object):
                 os.chdir(pathold)
             except: print 'MASK NOT WRITTEN TO SERVER FILE'
         else: Failed=True
-        
+        print "old path: "+pathold
         return  Failed,tagText,circleRatio, circleWidth, circleHeight
         
     def calculateLabelHist(self,imgBinary):
