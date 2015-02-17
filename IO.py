@@ -170,14 +170,15 @@ class IO(object):
         fout.write('\n')
         fout.close()
     def writeFile(self,para,traitsCrown,traitDict,all=False):
+       
         print "output file (working directory): "+str(os.getcwd())
         print "output file (relative): "+str(self.__serverPath)
         try:
-            if os.path.isfile(self.__serverPath+"/output.csv"):
-                fout=open(self.__serverPath+"/output.csv", "a")
+            if os.path.isfile(os.getcwd()+"/"+self.__id+"/output.csv"):
+                fout=open(os.getcwd()+"/"+self.__id+"/output.csv", "a")
             else: raise
         except:
-            fout = open(self.__serverPath+"/output.csv", "w")
+            fout = open(os.getcwd()+"/"+self.__id+"/output.csv", "w")
             for i in self.__parameters:
                     fout.write(str(i)+',')
             for k,v in traitDict.iteritems():
