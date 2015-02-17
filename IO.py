@@ -148,7 +148,6 @@ class IO(object):
             fout = open(path+serverFile, "w")
             fout.write('# File path, image id, type')
             fout.write('\n')
-            
            
         fout.write(string)
         fout.write('\n')
@@ -170,9 +169,7 @@ class IO(object):
         fout.write('\n')
         fout.close()
     def writeFile(self,para,traitsCrown,traitDict,all=False):
-       
-        print "output file (working directory): "+str(os.getcwd())
-        print "output file (relative): "+str(self.__serverPath)
+
         try:
             if os.path.isfile(os.getcwd()+"/"+self.__id+"/output.csv"):
                 fout=open(os.getcwd()+"/"+self.__id+"/output.csv", "a")
@@ -191,9 +188,7 @@ class IO(object):
                     
                     
             fout.write('\n')
-            
 
-    
         for i in para:
                     fout.write(str(i)+',')
         for k,v in traitDict.iteritems():
@@ -205,16 +200,12 @@ class IO(object):
         fout.write('\n')
         fout.close()
         
-    def scaleLateralValues(self,scale,valArr):
-        return 0
-    def scaleCrownValues(self,scale,valArr):
-        return 0
     def saveArray(self,arr,name):
         if self.__plots==False: return 0
         try:
             np.savetxt(name+'.gz',arr,delimiter=',')
             try:
-                self.writeServerFile('dirt_out.csv',os.getcwd()+name[1:]+'.gz'+','+str(self.getID())+',1')
+                self.writeServerFile('dirt_out.csv',os.getcwd()+name[1:]+'.gz'+','+str(self.__id)+',1')
             except:
                 raise
         except:
