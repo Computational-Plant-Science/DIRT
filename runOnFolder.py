@@ -36,7 +36,7 @@ if __name__ == '__main__':
         if i !='.DS_Store':
             if os.path.isfile(dir+i):
                 if os.path.isdir(dir+str(idx))==False:
-                    args.append(['python', os.getcwd()+'/main.py', dir+str(i),str(idx),seg, '1', '1', '1', '0.0', '0', '0', dir, './traits.csv'])
+                    args.append(['python', os.getcwd()+'/main.py', dir+str(i),str(idx),seg, '1', '1', '1', '0.0', '0', '0', '0', dir, './traits.csv'])
     r = pool.map_async(calculate, args)
     r.wait() # Wait on the results
     print 'All files done in '+str(time.time()-startT)+'s !'

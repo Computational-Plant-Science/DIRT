@@ -57,7 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 import IO
 import kmeans as km
-
+import ransac
 '''
 # external library imports
 '''
@@ -433,8 +433,8 @@ class Analysis(object):
         # retrieve stem diameter as the average if the distance field in the first 10%
         stemDia=np.median(xx[20:int(tenPercent)])
         # compute a simple angle at top and bottom along the outline for monocots (note this is more noisy than the D10 or D20 values that are more robust)
-        angleSimple=self.getAngleToXAxXY(xx[int(tenPercent):int(tenPercent)*3], yy[int(tenPercent):int(tenPercent)*3])
-        angleSimpleBottom=self.getAngleToXAxXY(xx[int(tenPercent)*3:int(tenPercent)*9], yy[int(tenPercent)*3:int(tenPercent)*9])
+        angleSimple=self.getAngleToXAxXY(xx[int(tenPercent):int(tenPercent)*3], yy[int(tenPercent):int(tenPercent)*3], ransacFitting=True)
+        angleSimpleBottom=self.getAngleToXAxXY(xx[int(tenPercent)*3:int(tenPercent)*9], yy[int(tenPercent)*3:int(tenPercent)*9], ransacFitting=True)
         print 'Stem Diameter: '+str(stemDia)
         print 'Root Top Angle: '+str(angleSimple)
         print 'Root Bottom Angle: '+str(angleSimpleBottom)
@@ -632,8 +632,8 @@ class Analysis(object):
         alpha= (np.arctan(m2)*180)/np.pi
         return np.fabs(alpha)
 
-    def getAngleToXAxXY(self, X,Y,counter=None):
-        m2,_=self.fitLineXY(X,Y)
+    def getAngleToXAxXY(self, X,Y,counter=None,ransacFitting=False):
+        m2,_=self.fitLineXY(X,Y,ransacFitting=ransacFitting)
         alpha= (np.arctan(m2)*180)/np.pi
         return np.fabs(alpha)
     
@@ -687,8 +687,9 @@ class Analysis(object):
             Y.append(vprop[G.vertex(m)]['coord'][1])
         (ar,br)=polyfit(X,Y,1)
         return ar,br
-    def fitLineXY(self,X,Y):
+    def fitLineXY(self,X,Y, ransacFitting=False):
         #Simple line fit.
+        if ransacFitting: X,Y=ransac.ransacFit(X,Y)
         (ar,br)=polyfit(X,Y,1)
         return ar,br
 
