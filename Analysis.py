@@ -689,7 +689,11 @@ class Analysis(object):
         return ar,br
     def fitLineXY(self,X,Y, ransacFitting=False):
         #Simple line fit.
-        if ransacFitting: X,Y=ransac.ransacFit(X,Y)
+        if ransacFitting:
+            try: 
+                X,Y=ransac.ransacFit(X,Y)
+            except: 
+                print "ransac fitting failed. Using simple linear fitting"
         (ar,br)=polyfit(X,Y,1)
         return ar,br
 

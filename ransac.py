@@ -38,6 +38,7 @@ def ransac(data,model,n,k,t,d,debug=False,return_all=False):
     
 This implementation written from pseudocode found at
 http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
+and was adapted to the DIRT pipeline by Alexander Bucksch
 
 {{{
 Given:
@@ -143,28 +144,6 @@ class LinearLeastSquaresModel:
         return err_per_point
         
 def ransacFit(X,Y):
-    # generate perfect input data
-
-#     n_samples = 500
-      
-#     A_exact = 20*numpy.random.random((n_samples,n_inputs) )
-#     perfect_fit = 60*numpy.random.normal(size=(n_inputs,n_outputs) ) # the model
-#     B_exact = scipy.dot(A_exact,perfect_fit)
-#     assert B_exact.shape == (n_samples,n_outputs)
-# 
-#     # add a little gaussian noise (linear least squares alone should handle this well)
-#     A_noisy = A_exact + numpy.random.normal(size=A_exact.shape )
-#     B_noisy = B_exact + numpy.random.normal(size=B_exact.shape )
-
-#     if 1:
-#         # add some outliers
-#         n_outliers = 100
-#         all_idxs = numpy.arange( A_noisy.shape[0] )
-#         numpy.random.shuffle(all_idxs)
-#         outlier_idxs = all_idxs[:n_outliers]
-#         non_outlier_idxs = all_idxs[n_outliers:]
-#         A_noisy[outlier_idxs] =  20*numpy.random.random((n_outliers,n_inputs) )
-#         B_noisy[outlier_idxs] = 50*numpy.random.normal(size=(n_outliers,n_outputs) )
 
     # setup model
     n_inputs = 1
@@ -191,29 +170,7 @@ def ransacFit(X,Y):
     ransac_fit, ransac_data = ransac(all_data,model,
                                      20, 1000, 7e3, 30, # misc. parameters
                                      debug=debug,return_all=True)
-    #if 1:
-        
 
-        #sort_idxs = numpy.argsort(X)
-        #A_col0_sorted = Xnew # maintain as rank-2 array
-
-        #if 0:
-        #pylab.plot( X, Y, 'k.', label='data' )
-           # pylab.plot( A_noisy[ransac_data['inliers'],0], B_noisy[ransac_data['inliers'],0], 'bx', label='RANSAC data' )
-#         else:
-#             pylab.plot( A_noisy[non_outlier_idxs,0], B_noisy[non_outlier_idxs,0], 'k.', label='noisy data' )
-#             pylab.plot( A_noisy[outlier_idxs,0], B_noisy[outlier_idxs,0], 'r.', label='outlier data' )
-        #pylab.plot( X,
-        #            numpy.dot(Xnew,ransac_fit)[:,0],
-        #            label='RANSAC fit' )
-#         pylab.plot( A_col0_sorted[:,0],
-#                     numpy.dot(A_col0_sorted,perfect_fit)[:,0],
-#                     label='exact system' )
-#         pylab.plot( A_col0_sorted[:,0],
-#                     numpy.dot(A_col0_sorted,linear_fit)[:,0],
-#                     label='linear fit' )
-        #pylab.legend()
-        #pylab.show()
     return  X,numpy.dot(Xnew,ransac_fit)[:,0]
 
 if __name__=='__main__':
