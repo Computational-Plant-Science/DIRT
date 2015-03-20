@@ -91,9 +91,9 @@ class Analysis(object):
         try:
             pdf, _ =np.histogram(ang,bins=9, range=(0, 90))
             maximum=[]
-            for i in range(1,len(pdf)-1):
-                if pdf[i-1] <= pdf[i]:
-                    if pdf[i+1] <= pdf[i]:
+            for i in range(0,len(pdf)-1):
+                if pdf[i-1] <= pdf[i] or i==0:
+                    if pdf[i+1] <= pdf[i] or i==len(pdf)-1:
                         maximum.append(i)
             
             pdfSort=np.argsort(pdf)
@@ -118,7 +118,8 @@ class Analysis(object):
                 return avgResult[0],-1
             
         except:
-            raise
+            print 'WARNING: no histo peaks found: Analysis.findHistoPeaks'
+            print pdf
             return -1,-1
 
     def smooth(self,x,window_len=11,window='hanning'):
@@ -704,10 +705,10 @@ class Analysis(object):
         secondSegmentRoots=cBas[0]-cBas[len(cBas)-1]
         
         for idx,i in enumerate(cAdv):
-            if cAdv[idx-1]-i > 5: #just a little treshhold to get rid of noise
+            if cAdv[idx-1]-i > 0: #just a little treshhold to get rid of noise
                 nrOfAdvRoots+=1
         for idx,i in enumerate(cBas):
-            if cBas[idx-1]-i > 5: #just a little treshhold to get rid of noise
+            if cBas[idx-1]-i > 0: #just a little treshhold to get rid of noise
                 nrOfBasRoots+=1
                 
         return nrOfAdvRoots,nrOfBasRoots,firstSegmentRoots,secondSegmentRoots, np.mean(cDiaAdv),np.mean(cDiaBas)
