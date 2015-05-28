@@ -101,6 +101,7 @@ class Preprocessing(object):
         orig=img.copy()
         mask=Masking.Masking(scale=scale)
         imgGrey = img.astype(np.uint8)
+        print 'make mask'
         imgBinary=mask.calculateMask(imgGrey)
         print 'saving binary mask'
         scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
@@ -138,7 +139,9 @@ class Preprocessing(object):
                 imgRoot=self.correctForStem(imgLabel.copy(), [circleIdx,rectIdx,rIdx], crownMin, crownMax, crownBottom, crownTop, rIdx, rIdxList)
             else:
                 print 'No stem reconstruction active' 
-                imgRoot=imgBinary[crownMax:crownMin,crownBottom:crownTop]
+                imgReturn=np.zeros_like(imgLabel)
+                imgReturn[rIdxList]=1
+                imgRoot=imgReturn[crownMax:crownMin,crownBottom:crownTop]
         
         if nrExRoot >1 and rootCrown==True:
 
@@ -331,7 +334,8 @@ class Preprocessing(object):
         print 'searching rootstock'
         labeled=labeledToCopy.copy()
         h,w=np.shape(labeled)
-        found=False    
+        found=False
+        idx1=0
         count=0
         '''
         We keep this piece of debug code, because the problem occurs in 1 of 10,000 images. Perhaps we understand it one day.
@@ -342,9 +346,11 @@ class Preprocessing(object):
             if (np.max(idx[0])+1) == w and (np.max(idx[1])+1)==h and (np.min(idx[0])) == 0 and (np.min(idx[1]))==0:
                 if count < len(self.__labelHist): 
                     found=False
+                    count+=1
                 else: found=True
                 print 'Only 1 background component that is smaller than the foreground ??? Probably a bug in the Masking routine'
-            else: found=True
+            else:
+                found=True
     
         '''
         bounding box
@@ -353,7 +359,7 @@ class Preprocessing(object):
         jMin=np.min(idx[1])
         iMax=np.max(idx[0])
         jMax=np.max(idx[1])
-        
+       
         print 'xMin and xMax of Root Crown: '+str(iMin)+' '+str(iMax)
         print 'yMin and yMax of Root Crown: '+str(jMin)+' '+str(jMax)
         
