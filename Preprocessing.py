@@ -1,8 +1,8 @@
 '''
 Preprocessing.py
 
-This module contains all imaiging operations to create input for analysis, 
-such as detecting the root in the image create and filter the biary image etc. 
+This module contains all imaging operations to create input for analysis, 
+such as detecting the root in the image create and filter the binary image etc. 
 
 The code is free for non-commercial use.
 Please contact the author for commercial use.
@@ -92,23 +92,31 @@ class Preprocessing(object):
         self.__w=0
         self.__tagCrop=10
         
-    def prepocess(self,img,scale=1.0,nrExRoot=1, marker=True):
+    def prepocess(self,img,rootCrown,scale=1.0,nrExRoot=1, marker=True, stemCorrection=False):
         print 'starting to segment'
+        rIdx=-1
         self.__io.setServerPath('./')
         circleIdx= circleRatio= circleWidth= circleHeight= imgCircle = 0
         Failed=False
         orig=img.copy()
         mask=Masking.Masking(scale=scale)
         imgGrey = img.astype(np.uint8)
+        print 'make mask'
         imgBinary=mask.calculateMask(imgGrey)
+        print 'saving binary mask'
+        scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
+        pathold=os.getcwd()
+        os.chdir(self.__io.getHomePath())
+        self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
+        os.chdir(pathold)
         imgLabel=self.calculateLabelHist(imgBinary)
 
         if marker== True: 
-                  print 'Marker is True'
-                  circleIdx, circleRatio, circleWidth, circleHeight, imgCircle =self.findCircle(imgLabel.copy())
+            print 'Marker is True'
+            circleIdx, circleRatio, circleWidth, circleHeight, imgCircle =self.findCircle(imgLabel.copy())
         else: 
-                  print 'Marker is False'
-                  circleIdx, circleRatio, circleWidth, circleHeight, imgCircle = -1, 1, 1, 1, None
+            print 'Marker is False'
+            circleIdx, circleRatio, circleWidth, circleHeight, imgCircle = -1, 1, 1, 1, None
         
         rectIdx, _, _, _,imgTag, tagText =self.findTag(imgLabel.copy() , imgBinary, orig, rect_ratio=5.)
        
@@ -124,14 +132,21 @@ class Preprocessing(object):
         '''
         These two functions belong together and have to be called right after each other. I know, that is bad.
         '''
-        rIdx,rIdxList,crownMin,crownMax,crownBottom,crownTop=self.findRoot(imgLabel.copy()) 
-        imgRoot=self.correctForStem(imgLabel.copy(), [circleIdx,rectIdx,rIdx], crownMin, crownMax, crownBottom, crownTop, rIdx, rIdxList)
-
+        if rootCrown==True:
+            rIdx,rIdxList,crownMin,crownMax,crownBottom,crownTop=self.findRoot(imgLabel.copy()) 
+            if stemCorrection== True: 
+                print 'Stem reconstruction is active '
+                imgRoot=self.correctForStem(imgLabel.copy(), [circleIdx,rectIdx,rIdx], crownMin, crownMax, crownBottom, crownTop, rIdx, rIdxList)
+            else:
+                print 'No stem reconstruction active' 
+                imgReturn=np.zeros_like(imgLabel)
+                imgReturn[rIdxList]=1
+                imgRoot=imgReturn[crownMax:crownMin,crownBottom:crownTop]
         
-        if nrExRoot >1:
+        if nrExRoot >1 and rootCrown==True:
 
             for i in range(nrExRoot): 
-                exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMax)
+                exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMin,crownMax)
                 if exRIdx != -1:
                     print 'found excised root '+str(i)
                     try: 
@@ -149,7 +164,7 @@ class Preprocessing(object):
                     except: 
                         print 'NOT SAVED !!!!'
                         raise
-        elif nrExRoot ==1: 
+        elif nrExRoot ==1 and rootCrown==True: 
             exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMin,crownMax)
             if exRIdx != -1:
                 print 'found the excised root '
@@ -162,25 +177,38 @@ class Preprocessing(object):
                     print 'excised root saved Server'
                     os.chdir(pathold)
                 except: print 'NOT SAVED !!!!'
-        print 'saving binary mask'
-        scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
+        elif nrExRoot ==1 and rootCrown==False:
+            exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx],0,1)
+            if exRIdx != -1:
+                print 'found the excised root '
+                rIdx=-1
+                try: 
+                    pathold=os.getcwd()
+                    os.chdir(self.__io.getHomePath())
+                    scipy.misc.imsave(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
+                    print 'excised root saved' 
+                    self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Lateral/'+self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png,' +str(self.__io.getID())+',0')
+                    print 'excised root saved Server'
+                    os.chdir(pathold)
+                except: print 'NOT SAVED !!!!'
+            
+        
         if marker==True:
             scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Circle.png', imgCircle)
             scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Tag.png', imgTag)
-        pathold=os.getcwd()
-        os.chdir(self.__io.getHomePath())
-        self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
+        #pathold=os.getcwd()
+        #os.chdir(self.__io.getHomePath())
+        
         if marker==True: 
             self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'Circle.png,' +str(self.__io.getID())+',0')
             
-        os.chdir(pathold)
+        #os.chdir(pathold)
         if rIdx != -1:
             '''
             If image is usable, then it gets segmented and copied. Otherwise we ignore it
             '''
             try:
                 print 'root image to be saved'
-                print np.unique(imgRoot)
                 scipy.misc.imsave(self.__io.getHomePath()+'/Crown/' + self.__io.getFileName()+'.png', imgRoot)
             except: 
                 print 'CROWN NOT SAVED'
@@ -192,7 +220,7 @@ class Preprocessing(object):
                 os.chdir(pathold)
             except: print 'MASK NOT WRITTEN TO SERVER FILE'
         else: Failed=True
-        
+        print "old path: "+pathold
         return  Failed,tagText,circleRatio, circleWidth, circleHeight
         
     def calculateLabelHist(self,imgBinary):
@@ -306,7 +334,8 @@ class Preprocessing(object):
         print 'searching rootstock'
         labeled=labeledToCopy.copy()
         h,w=np.shape(labeled)
-        found=False    
+        found=False
+        idx1=0
         count=0
         '''
         We keep this piece of debug code, because the problem occurs in 1 of 10,000 images. Perhaps we understand it one day.
@@ -317,9 +346,11 @@ class Preprocessing(object):
             if (np.max(idx[0])+1) == w and (np.max(idx[1])+1)==h and (np.min(idx[0])) == 0 and (np.min(idx[1]))==0:
                 if count < len(self.__labelHist): 
                     found=False
+                    count+=1
                 else: found=True
                 print 'Only 1 background component that is smaller than the foreground ??? Probably a bug in the Masking routine'
-            else: found=True
+            else:
+                found=True
     
         '''
         bounding box
@@ -328,7 +359,7 @@ class Preprocessing(object):
         jMin=np.min(idx[1])
         iMax=np.max(idx[0])
         jMax=np.max(idx[1])
-        
+       
         print 'xMin and xMax of Root Crown: '+str(iMin)+' '+str(iMax)
         print 'yMin and yMax of Root Crown: '+str(jMin)+' '+str(jMax)
         

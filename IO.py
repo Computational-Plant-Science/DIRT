@@ -78,47 +78,16 @@ class IO(object):
             self.__path = None
             self.__name = None
     
-    def __init__(self,homePath,name=None,ID=None):
+    def __init__(self,homePath=None,name=None,ID=None,plots=True):
         '''
         Constructor
         '''
+        self.__plots=plots
         self.__id=ID
         self.__currentID=None
         self.__path = homePath
         self.__name = name
         self.__serverPath=None
-        self.__traitsCrown=['stemDia','avg. Root Density', 
-                 'STA range', 
-                 'STA dom. angle 1', 
-                 'STA dom. angle 2',' STA 25% 1','STA 25% 2','STA 50% 1','STA 50% 2','STA 75% 1','STA 75% 2','STA 90% 1','STA 90% 2',
-                 'RTA dom. angle 1', 
-                 'RTA dom. angle 2',
-                 'STA min.',
-                 'STA max.',
-                 'STA median',
-                 'RTA range',
-                 'RTA min.',
-                 'RTA max.',
-                 'RTA median',
-                 'Nr. of RTPs', 
-                 'TD median',
-                 'TD mean',
-                 'DD90 max.','median Width','max. Width','D10','D20','D30','D40','D50','D60','D70','D80','D90','DS10','DS20','DS30','DS40','DS50','DS60','DS70','DS80','DS90',
-                 'spatial root distr. X','spatial root ditr. Y','CPD 25','CPD 50','CPD 75','CPD 90']
-
-        self.__traitsLateral=['avg. lateral length',
-                       'nodal root path length',
-                       'lateral branching frequency',
-                       'avg. nodal root diameter',
-                       'nodal root shape',
-                       'lateral avg. angle',
-                       'lateral angular range',
-                       'lateral min. angle',
-                       'lateral max. angle',
-                       'dist to first lateral',
-                       'median lateral diameter','mean lateral diameter'
-                       ]
-        
         self.__parameters=['Image ID','Image name','Failed',
                            'Experiment number',
                     'circle ratio',
@@ -126,8 +95,7 @@ class IO(object):
                     'y pixel',
                     'xScale',
                     'yScale','computation time','Skeleton Vertices']
-
-            
+        
     def setServerPath(self,p):
         self.__serverPath=p    
     def setFileName(self,name):
@@ -168,35 +136,79 @@ class IO(object):
         return files
     
     def writeServerFile(self,serverFile,string):
-        pass
-    
-    def writeFile(self,para,traitsCrown,traitsLateral):
+        path=self.__serverPath
+        print "server file (working directory): "+str(os.getcwd())
+        print "server file (relative): "+str(path)
         try:
-            if os.path.isfile(self.__serverPath+"/output.csv"):
-                fout=open(self.__serverPath+"/output.csv", "a")
+            if os.path.isfile(path+serverFile):
+                fout=open(path+serverFile, "a")
+            else: 
+                raise
+        except:
+            fout = open(path+serverFile, "w")
+            fout.write('# File path, image id, type')
+            fout.write('\n')
+           
+        fout.write(string)
+        fout.write('\n')
+        fout.close()
+    def writeRunFile(self,runfile,string):
+
+        path=self.__serverPath+'/'
+        try:
+            if os.path.isfile(path+'dirtRun.csv'):
+                fout=open(path+'dirtRun.csv', "a")
             else: raise
         except:
-            fout = open(self.__serverPath+"/output.csv", "w")
-            for i in self.__parameters:
-                    fout.write(str(i)+',')
-            for i in self.__traitsCrown:
-                    fout.write(str(i)+',')
-            for i in self.__traitsLateral:
-                    fout.write(str(i)+',')
+            fout = open(path+'dirtRun.csv', "w")
+            fout.write('# File path, image id')
             fout.write('\n')
             
+           
+        fout.write(runfile+', '+string)
+        fout.write('\n')
+        fout.close()
+    def writeFile(self,para,traitsCrown,traitDict,all=False):
+        print "output directory: "+self.__path+"/output.csv"
+        try:
+            if os.path.isfile(self.__path+"/output.csv"):
+                fout=open(self.__path+"/output.csv", "a")
+            else: raise
+        except:
+            fout = open(self.__path+"/output.csv", "w")
+            for i in self.__parameters:
+                    fout.write(str(i)+',')
+            for k,v in traitDict.iteritems():
+                if all==False:
+                    if v==True:
+                        if k in traitsCrown:
+                            fout.write(str(k)+',')
+                else:
+                    fout.write(str(k)+',')
+                    
+                    
+            fout.write('\n')
 
-    
         for i in para:
                     fout.write(str(i)+',')
-        for i in traitsCrown:
-                    fout.write(str(i)+',')
-        for i in traitsLateral:
-                    fout.write(str(i)+',')
+        for k,v in traitDict.iteritems():
+                if v==True and k in traitsCrown:
+                    fout.write(str(traitsCrown[k])+',')
+                elif all==True:
+                    fout.write(str(' ,'))
+                
         fout.write('\n')
         fout.close()
         
     def saveArray(self,arr,name):
-        pass
+        if self.__plots==False: return 0
+        try:
+            np.savetxt(name+'.gz',arr,delimiter=',')
+            try:
+                self.writeServerFile('dirt_out.csv',os.getcwd()+name[1:]+'.gz'+','+str(self.__id)+',1')
+            except:
+                raise
+        except:
+            raise
         
         

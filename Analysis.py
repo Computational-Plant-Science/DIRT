@@ -57,7 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 import IO
 import kmeans as km
-
+import ransac
 '''
 # external library imports
 '''
@@ -85,14 +85,15 @@ class Analysis(object):
         self.__id=io.getID()
         self.__currentIdx=io.getCurrentID()
         self.__scale=scale
+    
 
     def findHistoPeaks(self,ang):
         try:
             pdf, _ =np.histogram(ang,bins=9, range=(0, 90))
             maximum=[]
-            for i in range(1,len(pdf)-1):
-                if pdf[i-1] <= pdf[i]:
-                    if pdf[i+1] <= pdf[i]:
+            for i in range(0,len(pdf)-1):
+                if pdf[i-1] <= pdf[i] or i==0:
+                    if pdf[i+1] <= pdf[i] or i==len(pdf)-1:
                         maximum.append(i)
             
             pdfSort=np.argsort(pdf)
@@ -117,7 +118,8 @@ class Analysis(object):
                 return avgResult[0],-1
             
         except:
-            raise
+            print 'WARNING: no histo peaks found: Analysis.findHistoPeaks'
+            print pdf
             return -1,-1
 
     def smooth(self,x,window_len=11,window='hanning'):
@@ -227,7 +229,7 @@ class Analysis(object):
         except:
             pass
 
-        return avgLength
+        return avgLength*self.__scale
         
     def getLateralLengthRTP(self,RTP,img,counter=None):
         lengthArr=[]
@@ -338,7 +340,7 @@ class Analysis(object):
 
         avgDiameter=np.average(y)
         self.__io.saveArray(y,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_DiameterHisto')
-        return avgDiameter,-1
+        return avgDiameter,coeffs[0]
         
     def getDiameterQuantilesAlongSinglePath(self,path,G,counter=None):
         
@@ -375,7 +377,7 @@ class Analysis(object):
         
         return d25,d50,d75,d90
             
-    def getWidthOverHeight(self,img2,xScale,yScale,counter=None):
+    def getWidthOverHeight(self,img2,xScale,yScale):
         # We compute here all mask based traits at once (long lives Spagetti code :-) )
         if len(img2) > 0: 
             print 'IMG OK'
@@ -431,6 +433,12 @@ class Analysis(object):
         tenPercent=float(len(yy))*0.1
         # retrieve stem diameter as the average if the distance field in the first 10%
         stemDia=np.median(xx[20:int(tenPercent)])
+        # compute a simple angle at top and bottom along the outline for monocots (note this is more noisy than the D10 or D20 values that are more robust)
+        angleSimple=self.getAngleToXAxXY(xx[int(tenPercent):int(tenPercent)*3], yy[int(tenPercent):int(tenPercent)*3], ransacFitting=True)
+        angleSimpleBottom=self.getAngleToXAxXY(xx[int(tenPercent)*3:int(tenPercent)*9], yy[int(tenPercent)*3:int(tenPercent)*9], ransacFitting=True)
+        print 'Stem Diameter: '+str(stemDia)
+        print 'Root Top Angle: '+str(angleSimple)
+        print 'Root Bottom Angle: '+str(angleSimpleBottom)
         
         #smooth the noisy data
         for i in range(smoothRegion,len(yy)-smoothRegion):
@@ -481,11 +489,10 @@ class Analysis(object):
         Dslope=self.filterCDFTAngentSlope(xxNorm,ysmoothCS, D[:len(D)-1],100)
         #convert D array counts to percentages saved in the output file
         D=np.array(D,dtype=float)/float(len(ysmoothCS))
-#
-        return rootDensity,medianWidth,maxWidth,D,Dslope,sizeCount*(xScale*yScale),stemDia,-1,-1
+        return rootDensity,medianWidth,maxWidth,D[0],D[1],D[2],D[3],D[4],D[5],D[6],D[7],D[8],Dslope[0],Dslope[1],Dslope[2],Dslope[3],Dslope[4],Dslope[5],Dslope[6],Dslope[7],Dslope[8],sizeCount*(xScale*yScale),stemDia,angleSimple,angleSimpleBottom
 
     def getLengthOfPath(self, path):
-        length=len(path)
+        length=len(path)*self.__scale
         return length
     
     def calculateAngleAtDist(self,thickestPath,lat,corrBranchpts,scale,G,atDist=20,counter=None):
@@ -535,16 +542,27 @@ class Analysis(object):
     def calculateAngles(self,thickestPath,lat,corrBranchpts,G,counter=None):
         # calculates the angle between the hypocotyle and all rtps
         angles=[]
+        #tangents=self.filterRTPTangent(thickestPath,lat,corrBranchpts,window=45)
+        #RTP=self.filterRTP(RTP,thickestPath,skel)
         for i in range(len(lat)):
             ang=self.getAngleToXAx(G,lat[i])
             angles.append(ang)
         self.__io.saveArray(angles,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_AngleHistoN')
-
+#        f=p.figure()
+#        ax = f.add_subplot(111)
+#        p.hist(angles,bins=9, range=(0, 90))
+#        p.title('Histogram of angles between hypocotyle and roots')
+#        p.xlabel('angles in degree')
+#        p.ylabel('# of angles')
         minAngle=np.min(angles)
         maxAngle=np.max(angles)
         angRange=maxAngle-minAngle
         avgAngle=np.median(angles)
-
+#        p.text(0.3, 0.9,'angular range: '+str(angRange), ha='center', va='center', transform=ax.transAxes)
+#        p.text(0.3, 0.85,' median angle: '+str(avgAngle), ha='center', va='center', transform=ax.transAxes)
+#        p.savefig(self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_AngleHisto.png')
+#        self.__io.writeServerFile('./', 'dirt_out.csv',self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_AngleHisto.png,' +str(self.__id[self.__currentIdx])+',1')
+#        p.clf()
         return avgAngle,minAngle,maxAngle,angRange,angles
 
     def filterRTP(self,RTP,thickestpath,skel):
@@ -615,10 +633,48 @@ class Analysis(object):
         alpha= (np.arctan(m2)*180)/np.pi
         return np.fabs(alpha)
 
-    def getAngleToXAxXY(self, X,Y,counter=None):
-        m2,_=self.fitLineXY(X,Y)
+    def getAngleToXAxXY(self, X,Y,counter=None,ransacFitting=False):
+        m2,_=self.fitLineXY(X,Y,ransacFitting=ransacFitting)
         alpha= (np.arctan(m2)*180)/np.pi
         return np.fabs(alpha)
+    
+    def plotDiaRadius(self,paths,dia,thickestPath,nrOfClusters):
+        print 'do the kmeans :-)'
+        pts=[]
+        for i in range(len(paths)):
+            pts.append([paths[i],dia[i]])
+        
+        cl=km.kMeans(pts)
+        c=cl.kmeans(nrOfClusters, 0.01)
+        
+        cX=[]
+        cY=[]
+        
+        for nc in range(nrOfClusters):
+            cX.append([])
+            cY.append([])
+        for nc in range(nrOfClusters):
+            for i in c[nc]:
+                cX[nc].append(i[0])
+                cY[nc].append(i[1])
+        for nc in range(nrOfClusters):
+            self.__io.saveArray(cX[nc],self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_PathsDiaAx_'+str(nrOfClusters)+'_'+str(nc))
+            self.__io.saveArray(cY[nc],self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_PathsDiaAy_'+str(nrOfClusters)+'_'+str(nc))
+
+        if nrOfClusters ==2:
+            if cY[0][0]>cY[1][0]:
+                return cX[0],cY[0],cX[1],cY[1]
+            else:
+                return cX[1],cY[1],cX[0],cY[0]
+        if nrOfClusters ==3:
+            if cY[0][0]>cY[1][0] and cY[1][0]>cY[2][0]:
+                return cX[0],cY[0],cX[1],cY[1],cX[2],cY[2]
+            if cY[0][0]>cY[1][0] and cY[1][0]<cY[2][0]:
+                return cX[0],cY[0],cX[2],cY[2],cX[1],cY[1]
+            if cY[0][0]<cY[1][0] and cY[1][0]<cY[2][0]:
+                return cX[2],cY[2],cX[1],cY[1],cX[0],cY[0]
+            else:
+                return cX[2],cY[2],cX[0],cY[0],cX[1],cY[1]
          
     def fitLine(self,path,G):
         #Simple line fit.
@@ -632,9 +688,59 @@ class Analysis(object):
             Y.append(vprop[G.vertex(m)]['coord'][1])
         (ar,br)=polyfit(X,Y,1)
         return ar,br
-    def fitLineXY(self,X,Y):
+    def fitLineXY(self,X,Y, ransacFitting=False):
         #Simple line fit.
+        if ransacFitting:
+            try: 
+                X,Y=ransac.ransacFit(X,Y)
+            except: 
+                print "ransac fitting failed. Using simple linear fitting"
         (ar,br)=polyfit(X,Y,1)
         return ar,br
+
+    def countRootsPerSegment(self, cAdv,cBas, cDiaAdv, cDiaBas):
+        nrOfAdvRoots=0
+        nrOfBasRoots=0
+        firstSegmentRoots=cAdv[0]-cAdv[len(cAdv)-1]
+        secondSegmentRoots=cBas[0]-cBas[len(cBas)-1]
+        
+        for idx,i in enumerate(cAdv):
+            if cAdv[idx-1]-i > 0: #just a little treshhold to get rid of noise
+                nrOfAdvRoots+=1
+        for idx,i in enumerate(cBas):
+            if cBas[idx-1]-i > 0: #just a little treshhold to get rid of noise
+                nrOfBasRoots+=1
+                
+        return nrOfAdvRoots,nrOfBasRoots,firstSegmentRoots,secondSegmentRoots, np.mean(cDiaAdv),np.mean(cDiaBas)
             
+    def RTPsOverDepth(self, centralPath, rtpSkel):
+        
+        vprop=rtpSkel.vertex_properties['vp']
+        depth=[len(centralPath)]
+        nrOfP=[len(centralPath)]
+        fiftyPercentRtp=vprop[centralPath[0]]['nrOfPaths']/2
+        fiftyPercentDrop=0
+        for i in centralPath:
+            nrOfP.append(vprop[i]['nrOfPaths'])
+            depth.append(vprop[i]['coord'][1])
+            if vprop[i]['nrOfPaths']<=fiftyPercentRtp:
+                fiftyPercentDrop=vprop[i]['coord'][1]
+                
+        
+        self.__io.saveArray(nrOfP,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_RTPDepthX')
+        self.__io.saveArray(depth,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_RTPDepthY')
+        
+        return fiftyPercentDrop
+    def anglesPerClusterAtDist(self, cAdv, cBas, rtpSkel, path, lat,corrBranchpts, scale, dist=20):
+        # estimating the angles per cluster leads to distinguishing adventious roots from basal roots.
+        
+        vprop=rtpSkel.vertex_properties["vp"]
+        minPathsAdv=np.min(cAdv)
+        for idx,i in enumerate(path):
+            if minPathsAdv>vprop[i]['nrOfPaths']:
+                meanAdv=self.calculateAngleAtDist(path[:idx],lat,corrBranchpts,scale,rtpSkel,dist,None)
+                meanBas=self.calculateAngleAtDist(path[idx:],lat,corrBranchpts,scale,rtpSkel,dist,None)
+                break
+        print 'Adv and Bas Angle at 2cm:'+str(meanAdv)+' , '+str(meanBas)        
+        return meanAdv,meanBas
     
