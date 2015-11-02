@@ -528,6 +528,7 @@ def printHeader():
         print '<marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.'
         print '<stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off'
         print '<plots> 1 - plotting data is stored, 0 - plotting data is not stored'
+        print '<output format> 1 - the full trait set is put into one excel file containing empty cells for traits that were not computed, 0 - only computed files are written to the output file'
         print '<working directory> full path to folder were the result is stored'
         print '<trait file path> full path to .csv file containing the traits to be computed'
         print ' '
