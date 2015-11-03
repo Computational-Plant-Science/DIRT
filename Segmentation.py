@@ -585,19 +585,20 @@ class Segmentation(object):
                 pass
         return vertexIndex
     
-    def findLaterals(self,RTP,G,scale):
+    def findLaterals(self,RTP,G,scale,path):
         if scale ==0.:
             scale=1.
         corresBranchPoints=[]
         laterals=[]
         distToFirstLateral=2000000000000000
         vprop=G.vertex_properties["vp"]
-            
+        idx=self.findRootVertexLateral(G)
         for i in RTP:
             if len(i)>0:
                 for bp in i:
                     d=float(vprop[G.vertex(bp)]['diameter'])
                     radius=int(d/scale) # convert radius at branching point to pixels
+                    #print d,radius
                     if radius>0:
                         break
 
@@ -608,11 +609,26 @@ class Segmentation(object):
                 lBranch=len(i[:radius])
                 laterals.append(i[radius:])
                 corresBranchPoints.append(i[0])
-                if distToFirstLateral < lBranch: 
-                    distToFirstLateral=lBranch
+
+        #if path is not given, then no distance to first lateral is computed
+        if path!=None:
+            x=vprop[idx]['imgIdx'][0]
+            y=vprop[idx]['imgIdx'][1]
+
         
-        return laterals,corresBranchPoints,distToFirstLateral*scale
-                         
+            for i in corresBranchPoints:
+                ix=vprop[i]['imgIdx'][0]
+                iy=vprop[i]['imgIdx'][1]
+                d=(ix-x)**2+(iy-y)**2
+                if d < distToFirstLateral:
+                    distToFirstLateral=np.sqrt(d)
+        
+        
+        if path == None:
+            return laterals,corresBranchPoints
+        else:
+            return laterals,corresBranchPoints,distToFirstLateral*scale
+    
     
     def findHypocotylCluster(self,thickestPath,rtpSkel):
         print 'find Cluster'
