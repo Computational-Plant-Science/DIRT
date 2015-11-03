@@ -350,7 +350,7 @@ def threadCrown(filepath):
                 
                 if ifAnyKeyIsTrue(['ADVT_ANG','BASAL_ANG','STA_RANGE','STA_DOM_I','STA_DOM_II','STA_25_I','STA_25_II','STA_50_I','STA_50_II','STA_75_I','STA_75_II','STA_90_I','STA_90_II','RTA_DOM_I','RTA_DOM_II','STA_MIN','STA_MAX','STA_MED','RTA_RANGE','RTA_MIN','RTA_MAX','RTA_MED']):
                     currT=time.time()
-                    lat,corrBranchpts,_=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
+                    lat,corrBranchpts=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2, None)
                     print 'seg.findLaterals computed in '+str(time.time()-currT)+'s'
                     print 'Compute angles at 2cm'
                     currT=time.time()
@@ -456,6 +456,7 @@ def threadCrown(filepath):
         f=io.scanDir()
         for (counter,i) in enumerate(f):
             print 'processing lateral file: '+i
+            
             if maxExRoot>0:
                 xScale=allPara[counter/maxExRoot][7]
                 yScale=allPara[counter/maxExRoot][8]
@@ -495,7 +496,7 @@ def threadCrown(filepath):
                             crownT['NODAL_AVG_DIA'],_=analysis.getDiametersAlongSinglePath(path,rtpSkel,(xScale+yScale)/2)
                             crownT['NODAL_LEN']=analysis.getLengthOfPath(path)
                         if ifAnyKeyIsTrue(['LT_DIST_FIRST','LT_AVG_LEN','LT_BRA_FRQ','LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
-                            lat,corrBranchpts,crownT['LT_DIST_FIRST']=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2)
+                            lat,corrBranchpts,crownT['LT_DIST_FIRST']=seg.findLaterals(rtps, rtpSkel,(xScale+yScale)/2,path)
                             if ifAnyKeyIsTrue(['LT_AVG_LEN']):
                                 crownT['LT_AVG_LEN']=analysis.getLateralLength(lat,path,rtpSkel)
                             if ifAnyKeyIsTrue(['LT_ANG_RANGE','LT_AVG_ANG','LT_MIN_ANG','LT_MAX_ANG']):
@@ -528,7 +529,6 @@ def printHeader():
         print '<marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.'
         print '<stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off'
         print '<plots> 1 - plotting data is stored, 0 - plotting data is not stored'
-        print '<output format> 1 - the full trait set is put into one excel file containing empty cells for traits that were not computed, 0 - only computed files are written to the output file'
         print '<working directory> full path to folder were the result is stored'
         print '<trait file path> full path to .csv file containing the traits to be computed'
         print ' '
