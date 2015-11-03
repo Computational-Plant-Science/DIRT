@@ -228,7 +228,7 @@ class Analysis(object):
             
         except:
             pass
-
+        print "Avg.Length Scale Nodalroot"+str(self.__scale)
         return avgLength*self.__scale
         
     def getLateralLengthRTP(self,RTP,img,counter=None):
@@ -309,15 +309,16 @@ class Analysis(object):
     def getBranchingfrequencyAlongSinglePath(self,rtps,path):
         bp=[]
         for i in rtps:
-            bp.append(i[0])
+            if i[0]!=path[0]:
+                bp.append(i[0])
         
         bpUnique=np.unique(bp)    
         try:
             branchFreqency=float(len(path))/float(len(bpUnique))
         except:
             branchFreqency=-1
-        print 'Branching Frequency in pixel: ' +str(branchFreqency)
-        return branchFreqency
+        print 'Branching Frequency in given unit: ' +str(branchFreqency*self.__scale)
+        return branchFreqency*self.__scale
         
     def getDiametersAlongSinglePath(self,path,G,scale,counter=None):
         vprop=G.vertex_properties["vp"]
