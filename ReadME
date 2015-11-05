@@ -34,7 +34,7 @@ Usage:
 <mask threshold> multiplier for the automatically determined mask threshold. 1.0 works fine and is default. For example, if a flashlight is used to take root images, then 0.6 is a good choice.
 <excised roots> number of roots placed at the right of the root crown, 0 - excised root analysis is off
 <crown root> 1 - crown root analysis is on, 0 - crown root analysis is off
-<segmentation> 1 -  is on, 0 - is off. Off refers to a pre-existing segmention done with DIRT. Binary amsks as input images are detcted automatically.
+<segmentation> 1 -  is on, 0 - is off. Off refers to a pre-existing segmention done with DIRT. Binary masks as input images are detected automatically.
 <marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.
 <stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off
 <plots> 1 - plotting data is stored, 0 - plotting data is not stored
