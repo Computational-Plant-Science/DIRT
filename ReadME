@@ -62,7 +62,7 @@ Please adjust line 86 according to the description above and note that the scrip
 
 Updates in DIRT 1.1 (4 November 2015):
 ------------------------------------------------------------
-- Minor bug fixes in the excised root calculations. Thanks to Alexandre Grondin (U Nebraska) for discovering it.
+- Minor bug fixes in the excised root calculations. Thanks to Alexandre Grondin (U Nebraska) for discovering and validating the fixes.
 
 
 Changes in DIRT 1.1 (14 January 2015):
