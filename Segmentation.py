@@ -590,7 +590,7 @@ class Segmentation(object):
             scale=1.
         corresBranchPoints=[]
         laterals=[]
-        distToFirstLateral=2000000000000000
+        distToFirstLateral=2000000000000000.
         vprop=G.vertex_properties["vp"]
         idx=self.findRootVertexLateral(G)
         for i in RTP:
@@ -612,17 +612,19 @@ class Segmentation(object):
 
         #if path is not given, then no distance to first lateral is computed
         if path!=None:
-            x=vprop[idx]['imgIdx'][0]
-            y=vprop[idx]['imgIdx'][1]
-
-        
+            
+            x=vprop[G.vertex(idx)]['imgIdx'][0] # Note idx is a vertex object
+            y=vprop[G.vertex(idx)]['imgIdx'][1]
+            
             for i in corresBranchPoints:
-                ix=vprop[i]['imgIdx'][0]
-                iy=vprop[i]['imgIdx'][1]
-                d=(ix-x)**2+(iy-y)**2
-                if d < distToFirstLateral:
-                    distToFirstLateral=np.sqrt(d)
-        
+                try:
+                    ix=vprop[G.vertex(i)]['imgIdx'][0] #Note: i is an index and the vertex object has to be called
+                    iy=vprop[G.vertex(i)]['imgIdx'][1]
+                    d=(ix-x)**2+(iy-y)**2
+                    if d < distToFirstLateral:
+                        distToFirstLateral=np.sqrt(d)
+                except:
+                    pass
         
         if path == None:
             return laterals,corresBranchPoints
