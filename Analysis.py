@@ -433,10 +433,17 @@ class Analysis(object):
         xxNorm=np.array(xx)/np.max(xx)
         tenPercent=float(len(yy))*0.1
         # retrieve stem diameter as the average if the distance field in the first 10%
-        stemDia=np.median(xx[20:int(tenPercent)])
+        try:
+         stemDia=np.median(xx[20:int(tenPercent)])
+        except:
+         stemDia=-1
         # compute a simple angle at top and bottom along the outline for monocots (note this is more noisy than the D10 or D20 values that are more robust)
-        angleSimple=self.getAngleToXAxXY(xx[int(tenPercent):int(tenPercent)*3], yy[int(tenPercent):int(tenPercent)*3], ransacFitting=True)
-        angleSimpleBottom=self.getAngleToXAxXY(xx[int(tenPercent)*3:int(tenPercent)*9], yy[int(tenPercent)*3:int(tenPercent)*9], ransacFitting=True)
+        try:
+         angleSimple=self.getAngleToXAxXY(xx[int(tenPercent):int(tenPercent)*3], yy[int(tenPercent):int(tenPercent)*3], ransacFitting=True)
+         angleSimpleBottom=self.getAngleToXAxXY(xx[int(tenPercent)*3:int(tenPercent)*9], yy[int(tenPercent)*3:int(tenPercent)*9], ransacFitting=True)
+        except:
+         angleSimple=-1
+         angleSimpleBottom=-1
         print 'Stem Diameter: '+str(stemDia)
         print 'Root Top Angle: '+str(angleSimple)
         print 'Root Bottom Angle: '+str(angleSimpleBottom)
