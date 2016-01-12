@@ -60,10 +60,13 @@ Please adjust line 86 according to the description above and note that the scrip
 
 ------------------------------------------------------------
 
+Updates in DIRT 1.1 (11 January 2016):
+------------------------------------------------------------
+- Minor bug fixes in Preprocessing.py to allow smaller circle markers and fix a possible missdetection of the experiment tag as the circle. Thanks to Linda Zamariola (U Bologna) for finding this issue.
+
 Updates in DIRT 1.1 (4 November 2015):
 ------------------------------------------------------------
 - Minor bug fixes in the excised root calculations. Thanks to Alexandre Grondin (U Nebraska) for discovering and validating the fixes.
-
 
 Changes in DIRT 1.1 (14 January 2015):
 ------------------------------------------------------------
