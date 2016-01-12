@@ -219,6 +219,8 @@ class Preprocessing(object):
                 self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Crown/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
                 os.chdir(pathold)
             except: print 'MASK NOT WRITTEN TO SERVER FILE'
+        elif rIdx == -1 and exRIdx !=-1:
+            print "Only excised roots computed"
         else: Failed=True
         print "old path: "+pathold
         return  Failed,tagText,circleRatio, circleWidth, circleHeight
@@ -272,17 +274,16 @@ class Preprocessing(object):
                 yMax = np.max(self.__compsY[i])
                 nonZ=len(self.__compsX[i])
                 allPx=(xMax-xMin)*(yMax-yMin)
-                ratioSqualetoCircleRatio=float(nonZ)/float(allPx)
+                squareToCircleRatio=float(nonZ)/float(allPx)
                 '''
                 compensates for small noisy components and small excised roots
                 '''
-                if float(nonZ)/float(w*h)>0.001:
+                if float(nonZ)/float(w*h)>0.0001:
                     '''
                     the inscribed circle of a bounding box fills exactly 78.64 percent -> we allow 8.64 percent variation due to noise
                     '''
                     tagRatio=(float(xMax) - float(xMin)) / (float(yMax) - float(yMin))
-                    print 'Circle Ratio before SquareRatioTest: '+str(tagRatio) +' ID: '+str(self.__currentIdx)
-                    if ratioSqualetoCircleRatio > 0.7:
+                    if squareToCircleRatio > 0.7:
                         '''
                         sanity check
                         '''
@@ -542,7 +543,7 @@ class Preprocessing(object):
                     '''
                     The Tag should have more length then height
                     '''
-                    if (xMax-xMin)>=2*(yMax-yMin):
+                    if (xMax-xMin)>=1.5*(yMax-yMin):
                         '''
                         The Tag should be in the upper half of the image
                         '''
