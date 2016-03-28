@@ -4,7 +4,7 @@
 DIRT 1.1 - An automatic high throughput root phenotyping platform
 Web interface by Abhiram Das - adas30@biology.gatech.edu
 
-http://www.dirt.biology.gatech.edu
+http://dirt.iplantcollaborative.org
 
 Georgia Institute of Technology
 
@@ -515,7 +515,7 @@ def printHeader():
         print '(c) 2014 Alexander Bucksch - bucksch@gatech.edu'
         print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
         print ' '
-        print 'http://www.dirt.biology.gatech.edu'
+        print 'http://dirt.iplantcollaborative.org'
         print ' '
         print 'Georgia Institute of Technology'
         print '------------------------------------------------------------'
@@ -543,7 +543,7 @@ def printHeader():
         print '(c) 2014 Alexander Bucksch - bucksch@gatech.edu'
         print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
         print ' '
-        print 'http://www.dirt.biology.gatech.edu'
+        print 'http://dirt.iplantcollaborative.org'
         print ' '
         print 'Georgia Institute of Technology'
         print '------------------------------------------------------------'
