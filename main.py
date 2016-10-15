@@ -6,7 +6,7 @@ Web interface by Abhiram Das - adas30@biology.gatech.edu
 
 http://dirt.iplantcollaborative.org
 
-Georgia Institute of Technology
+University of Georgia
 
 The software is written in:
 - python 2.7 (https://www.python.org)
@@ -40,10 +40,10 @@ Bucksch et al., 2014 "Image-based high-throughput field phenotyping of crop root
 ----------------------------------------------------------------------------------------------------
 Author: Alexander Bucksch
 School of Biology and Interactive computing
-Georgia Institute of Technology
+University of Georgia
 
-Mail: bucksch@gatech.edu
-Web: http://www.bucksch.nl
+Mail: bucksch@uga.edu
+Web: http://www.computational-plant-science.org
 ----------------------------------------------------------------------------------------------------
 
 Copyright (c) 2014 Alexander Bucksch
@@ -512,12 +512,12 @@ def printHeader():
     if os.path.exists('./options.csv')==False and len(sys.argv)!=13:
         print '------------------------------------------------------------' 
         print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
-        print '(c) 2014 Alexander Bucksch - bucksch@gatech.edu'
+        print '(c) 2014 Alexander Bucksch - bucksch@uga.edu'
         print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
         print ' '
         print 'http://dirt.iplantcollaborative.org'
         print ' '
-        print 'Georgia Institute of Technology'
+        print 'University of Georgia'
         print '------------------------------------------------------------'
         print 'Program usage: python main.py (please configure the program with the otions.csv file)'
         print '<run file path> full path to file with the root image'
@@ -540,12 +540,12 @@ def printHeader():
     else:
         print '------------------------------------------------------------' 
         print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
-        print '(c) 2014 Alexander Bucksch - bucksch@gatech.edu'
+        print '(c) 2014 Alexander Bucksch - bucksch@uga.edu'
         print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
         print ' '
         print 'http://dirt.iplantcollaborative.org'
         print ' '
-        print 'Georgia Institute of Technology'
+        print 'University of Georgia'
         print '------------------------------------------------------------'
         print ' '
         print 'Initializing folder structure'  
