@@ -39,7 +39,9 @@ Bucksch et al., 2014 "Image-based high-throughput field phenotyping of crop root
 
 ----------------------------------------------------------------------------------------------------
 Author: Alexander Bucksch
-School of Biology and Interactive computing
+Department of Plant Biology
+Warnell School of Forestry and Natural Resources
+Institute of Bioinformatics
 University of Georgia
 
 Mail: bucksch@uga.edu
@@ -513,7 +515,7 @@ def printHeader():
         print '------------------------------------------------------------' 
         print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
         print '(c) 2014 Alexander Bucksch - bucksch@uga.edu'
-        print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
+        print 'Web application by Abhiram Das - abhiram.das@gmail.com'
         print ' '
         print 'http://dirt.iplantcollaborative.org'
         print ' '
@@ -541,7 +543,7 @@ def printHeader():
         print '------------------------------------------------------------' 
         print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
         print '(c) 2014 Alexander Bucksch - bucksch@uga.edu'
-        print 'Web application by Abhiram Das - adas30@biology.gatech.edu'
+        print 'Web application by Abhiram Das - abhiram.das@gmail.com'
         print ' '
         print 'http://dirt.iplantcollaborative.org'
         print ' '
