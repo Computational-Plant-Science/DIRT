@@ -484,16 +484,21 @@ class Analysis(object):
         
         
         # for drawing we need all DS valuse ofver the curve
-        Dslope=self.filterCDFTAngentSlope(xxNorm,ysmoothCS, range(len(ysmoothCS)),200)
+        #Dslope=self.filterCDFTAngentSlope(xxNorm,ysmoothCS, range(len(ysmoothCS)),200)
         
         #save the data for plotting
         self.__io.saveArray(xxNorm,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthCSX') 
         self.__io.saveArray(ysmoothCS,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthCSY')
-        self.__io.saveArray(Dslope,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSX') 
-        self.__io.saveArray(ysmoothCS,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSY')
+        #self.__io.saveArray(Dslope,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSX')
+        #self.__io.saveArray(ysmoothCS,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSY')
 
         # for the final output we just need the 10 reveant slopes
         # Note, we adjusted the window size to 100. In the paper we used 20
+        print '****** filterCDFTAngentSlope Input **********'
+        print xxNorm
+        print ysmoothCS
+        print D[:len(D)-1]
+        
         Dslope=self.filterCDFTAngentSlope(xxNorm,ysmoothCS, D[:len(D)-1],100)
         #convert D array counts to percentages saved in the output file
         D=np.array(D,dtype=float)/float(len(ysmoothCS))
@@ -592,16 +597,18 @@ class Analysis(object):
             tmpTangentX=[]
             tmpTangentY=[]
             for j in range(window):
-                
+                print 'appendices'
+                print x[int(i)-j],CDF[int(i)-j]
                 if j<i:
                     try:
-                        tmpTangentX.append(x[i-j])
-                        tmpTangentY.append(CDF[i-j])
-                    except:pass
+                        tmpTangentX.append(x[int(i)-j])
+                        tmpTangentY.append(CDF[int(i)-j])
+                    except:
+                        pass
                 if j<len(CDF)-j:
                     try:
-                        tmpTangentX.append(x[i+j])
-                        tmpTangentY.append(CDF[i+j])
+                        tmpTangentX.append(x[int(i)+j])
+                        tmpTangentY.append(CDF[int(i)+j])
                     except: pass
             a,_=self.fitLineXY(tmpTangentX,tmpTangentY)
             tangents.append(a)
@@ -703,7 +710,15 @@ class Analysis(object):
                 X,Y=ransac.ransacFit(X,Y)
             except: 
                 print "ransac fitting failed. Using simple linear fitting"
-        (ar,br)=polyfit(X,Y,1)
+        try:
+		print '**** Polyfit Input *****'
+		print X
+		print Y
+		(ar,br)=polyfit(X,Y,1)
+	except:
+		print "Fitting Failed (Analysis.py line 709)"
+		ar=1.
+		br=1.
         return ar,br
 
     def countRootsPerSegment(self, cAdv,cBas, cDiaAdv, cDiaBas):

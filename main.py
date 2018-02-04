@@ -162,6 +162,7 @@ def init(fpath,io):
     readTraits(options[12][1])
 def readTraits(myFilePath='./traits.csv'):
     global traitDict
+    print "TRAITS DIRECTORY: "+ os.getcwd()
     #check to make sure its a file not a sub folder
     if (os.path.isfile(myFilePath) and myFilePath.endswith(".csv")):
         with open(myFilePath, 'U') as csvfile: 
@@ -176,7 +177,7 @@ def readTraits(myFilePath='./traits.csv'):
                 except:
                     print 'invalid entry in trait file: '+ str(row)
                     pass
-    
+    print traitDict
     return 
     
 def readOptions():

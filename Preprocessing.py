@@ -539,7 +539,7 @@ class Preprocessing(object):
                 '''
                 The Tag should cover at least 0.5% of the picture
                 '''
-                if float((xMax-xMin)*(yMax-yMin))/float(self.__h*self.__w) >0.005:
+                if float((xMax-xMin)*(yMax-yMin))/float(self.__h*self.__w) >0.005 and float((xMax-xMin)*(yMax-yMin))/float(self.__h*self.__w) <0.01:
                     '''
                     The Tag should have more length then height
                     '''
