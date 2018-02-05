@@ -25,6 +25,8 @@ def calculate(args):
         print "ERROR in File: "+str(args[2])
 
 if __name__ == '__main__':
+    print os.getcwd()
+    print "runOnFolder.py <image directory> <output directory>  <segmentation threshold> <marker diameter>"
     main_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'main.py'))
     startT=time.time()
     dir = os.path.abspath(sys.argv[1])
@@ -32,8 +34,9 @@ if __name__ == '__main__':
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)        
     seg=sys.argv[3]  
+    marker=sys.argv[4]  
     files=os.listdir(dir)
-    pool = multiprocessing.Pool(processes=8)
+    pool = multiprocessing.Pool(processes=20)
     args=[]
     for idx,i in enumerate(files): 
         if i != '.DS_Store' and os.path.isfile(os.path.join(dir, i)):
@@ -45,12 +48,12 @@ if __name__ == '__main__':
                              '1', # excised root
                              '1', # crown root
                              '1', # segmentation
-                             '0.0', # marker diameter
+                             marker, # marker diameter
                              '0', # stem reconstruction
                              '0', # plots
                              '0', # output format
                              work_dir, # working directory
-                             './traits.csv']) # trait file path
+                             'traits.csv']) # trait file path
     r = pool.map_async(calculate, args)
     r.wait() # Wait on the results
     print 'All files done in '+str(time.time()-startT)+'s !'

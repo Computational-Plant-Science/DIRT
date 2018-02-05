@@ -228,7 +228,12 @@ class Segmentation(object):
         epropW=skelGraph.edge_properties["w"]
         
         maxDia=np.max(skelDia)
-        maxDia10=np.max(skelDia[0:len(skelDia)*0.1])
+	try:
+		diaIdx=int(len(skelDia)*0.1)
+	except:
+		print "Error line 234 in Segmentation.py"
+		diaIdx=1
+        maxDia10=np.max(skelDia[0:diaIdx])
         print 'max Diameter: '+ str(maxDia)
         path=[]
         #remove all two-connected ones with 0 label

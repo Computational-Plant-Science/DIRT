@@ -89,7 +89,7 @@ import scipy
 '''
 # internal library imports
 '''
-import IO
+import dirtIO 
 import Segmentation
 import Preprocessing
 import Skeleton
@@ -114,7 +114,7 @@ allCrown=[]
 allPara=[]
 f=[]
 imgID=None
-io=IO.IO()
+io=dirtIO.IO()
 options=[]
 scale=None
 ID=None
@@ -148,6 +148,7 @@ def init(fpath, io):
     
 def readTraits(myFilePath='./traits.csv'):
     global traitDict
+    print "TRAITS DIRECTORY: "+ os.getcwd()
     #check to make sure its a file not a sub folder
     if (os.path.isfile(myFilePath) and myFilePath.endswith(".csv")):
         with open(myFilePath, 'U') as csvfile: 
@@ -162,7 +163,7 @@ def readTraits(myFilePath='./traits.csv'):
                 except:
                     print 'invalid entry in trait file: '+ str(row)
                     pass
-    
+    print traitDict
     return 
     
 def readOptions():
