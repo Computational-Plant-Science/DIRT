@@ -122,44 +122,30 @@ stemCorrection=False
 maxExRoot=None
 traitDict= OrderedDict()
 
-def init(fpath,io):
+def init(fpath, io):
     oldpath = os.getcwd()
     io.setHomePath(fpath)
-    if os.path.exists(fpath)==False: 
+    if not os.path.exists(fpath): 
         os.mkdir(fpath)
     os.chdir(fpath)
     print os.getcwd()
     io.setServerPath(os.getcwd())
-    if os.path.exists('./tmp/') == False:
-        os.mkdir('./tmp/')
-    if os.path.exists('./Mask/') == False:
-        os.mkdir('./Mask/')
-    if os.path.exists('./Lateral/') == False:
-        os.mkdir('./Lateral/')
-        if os.path.exists('./Lateral/Plots/') == False:
-            os.mkdir('./Lateral/Plots/')
-        if os.path.exists('./Lateral/Result/') == False:
-            os.mkdir('./Lateral/Result/')
-    else:
-        if os.path.exists('./Lateral/Plots/') == False:
-            os.mkdir('./Lateral/Plots/')
-        if os.path.exists('./Lateral/Result/') == False:
-            os.mkdir('./Lateral/Result/')
-    
-    if os.path.exists('./Crown/') == False:
-        os.mkdir('./Crown/')
-        if os.path.exists('./Crown/Plots/') == False:
-            os.mkdir('./Crown/Plots/')
-        if os.path.exists('./Crown/Result/') == False:
-            os.mkdir('./Crown/Result/')
-    else:
-        if os.path.exists('./Crown/Plots/') == False:
-            os.mkdir('./Crown/Plots/')
-        if os.path.exists('./Crown/Result/') == False:
-            os.mkdir('./Crown/Result/')
+    if not os.path.exists('tmp'):
+        os.mkdir('tmp')
+    if not os.path.exists('Mask'):
+        os.mkdir('Mask')
+    if not os.path.exists(os.path.join('Lateral','Plots')):
+        os.makedirs(os.path.join('Lateral','Plots'))
+    if not os.path.exists(os.path.join('Lateral','Result')):
+        os.makedirs(os.path.join('Lateral','Result'))
+    if not os.path.exists(os.path.join('Crown','Plots')):
+        os.makedirs(os.path.join('Crown','Plots'))
+    if not os.path.exists(os.path.join('Crown','Result')):
+        os.makedirs(os.path.join('Crown','Result'))
     
     os.chdir(oldpath)
     readTraits(options[12][1])
+    
 def readTraits(myFilePath='./traits.csv'):
     global traitDict
     #check to make sure its a file not a sub folder
@@ -182,7 +168,7 @@ def readTraits(myFilePath='./traits.csv'):
 def readOptions():
     global options
     if len(sys.argv)==13:
-        options.append([0,os.path.dirname(sys.argv[1])+'/'])
+        options.append([0,os.path.dirname(sys.argv[1])])
         options.append([0,os.path.basename(sys.argv[1])])
         options.append([0,sys.argv[2]])
         options.append([0,sys.argv[3]])
@@ -222,11 +208,13 @@ def threadSegmentation(filepath,imgFile,imgID,maxExRoot,rootCrown,marker):
     io.setidIdx(imgID)
     prep=Preprocessing.Preprocessing(io)
     print 'segmenting file: '+imgFile +'\n'
+    
+    image_file_path = os.path.join(options[0][1], imgFile)
 
-    if os.path.isfile(options[0][1]+imgFile):
+    if os.path.isfile(image_file_path):
         # fix orientation of the image in tiff and Jpg files
-        fix_orientation(options[0][1]+imgFile, save_over=True)
-        img= scipy.misc.imread(options[0][1]+imgFile,flatten=True)
+        fix_orientation(image_file_path, save_over=True)
+        img= scipy.misc.imread(image_file_path, flatten=True)
             
     else:
         print 'Image not readable'
@@ -511,7 +499,7 @@ def threadCrown(filepath):
     #os.chdir('../')
    
 def printHeader():
-    if os.path.exists('./options.csv')==False and len(sys.argv)!=13:
+    if not os.path.exists('./options.csv') and len(sys.argv)!=13:
         print '------------------------------------------------------------' 
         print 'DIRT 1.1 - An automatic highthroughput root phenotyping platform'
         print '(c) 2014 Alexander Bucksch - bucksch@uga.edu'
@@ -578,13 +566,13 @@ def main(opt=None):
     rootCrown=int(options[5][1])
     maxExRoot=int(options[4][1])
     io.__init__(options[0][1],ID=ID,plots=bool(int(options[9][1])))
-    init(options[11][1]+str(ID)+'/',io)
+    init(os.path.join(options[11][1], str(ID)), io)
     
     #Run analysis
     if int(options[6][1]) == 0:
-        io.setHomePath(options[11][1]+str(ID)+'/')
+        io.setHomePath(os.path.join(options[11][1], str(ID)))
         print os.getcwd()
-        infile=open(io.getHomePath()+'/tmp/para.sav','rb')
+        infile=open(os.path.join(io.getHomePath(), 'tmp', 'para.sav'), 'rb')
         allPara=pickle.load(infile)
         infile.close()
         print 'Saved parameters loaded'
@@ -592,7 +580,7 @@ def main(opt=None):
         
     elif int(options[6][1]) == 1:
         threadSegmentation(options[11][1],options[1][1],ID,int(options[4][1]),rootCrown,float(options[7][1])>0.0)
-        outfile=open(io.getHomePath()+'/tmp/para.sav','wb')
+        outfile=open(os.path.join(io.getHomePath(), 'tmp', 'para.sav'), 'wb')
         pickle.dump(allPara,outfile)
         outfile.close()
     else: print'The segmentation switch must be 0 or 1'
@@ -600,12 +588,12 @@ def main(opt=None):
     if int(options[5][1]) != 0 or int(options[4][1]) != 0: 
         
         print 'Start Root Analysis'
-        threadCrown(options[11][1]+str(ID)+'/')
+        threadCrown(os.path.join(options[11][1], str(ID)))
         print "Exiting Root Analysis"
         
     
-    compTime=int((time.time()-allStart))
-    print 'All done in just '+str(compTime)+' s!'  
+    compTime=int((time.time() - allStart))
+    print 'All done in just ' + str(compTime) + ' s!'  
     print 'Write output.csv file'
     r=len(allCrown)
     if r==0: r=len(allCrown)

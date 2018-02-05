@@ -1,0 +1,6 @@
+**/*.pyc
+
+# Eclipse IDE's project files
+.project
+.pydevproject
+.settings
