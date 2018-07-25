@@ -4,3 +4,6 @@
 .project
 .pydevproject
 .settings
+
+# Dirt output
+dirt_out.csv
