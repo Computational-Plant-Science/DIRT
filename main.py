@@ -143,7 +143,7 @@ def init(fpath, io):
     if not os.path.exists(os.path.join('Crown','Result')):
         os.makedirs(os.path.join('Crown','Result'))
     if not os.path.exists(os.path.join('Crown','Skeleton')):
-        os.mkdirs(os.path.join('Crown','Skeleton'))
+        os.makedirs(os.path.join('Crown','Skeleton'))
     
     os.chdir(oldpath)
     readTraits(options[12][1])
