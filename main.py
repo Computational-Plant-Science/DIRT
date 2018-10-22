@@ -142,6 +142,8 @@ def init(fpath, io):
         os.makedirs(os.path.join('Crown','Plots'))
     if not os.path.exists(os.path.join('Crown','Result')):
         os.makedirs(os.path.join('Crown','Result'))
+    if not os.path.exists(os.path.join('Crown','Skeleton')):
+        os.makedirs(os.path.join('Crown','Skeleton'))
     
     os.chdir(oldpath)
     readTraits(options[12][1])
@@ -290,6 +292,7 @@ def threadCrown(filepath):
                 currT=time.time()
                 skel=Skeleton.Skeleton(imgL)
                 testSkel,testDia=skel.skel(imgL)
+                scipy.misc.imsave(os.path.join(io.getHomePath(), 'Skeleton', io.getFileName() + '_skel.png'), testSkel)
                 print 'Medial axis computed '+str(time.time()-currT)+'s'
                 currT=time.time()
                 path,skelGraph,crownT['DIA_STM'],skelSize=seg.findThickestPath(testSkel,testDia,xScale,yScale)
