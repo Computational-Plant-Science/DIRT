@@ -513,10 +513,10 @@ def printHeader():
         print 'Program usage: python main.py (please configure the program with the otions.csv file)'
         print '<run file path> full path to file with the root image'
         print '<unique id> ID which will be a folder name in theworking directory. Integer value needed'
-        print '<mask threshold> multiplier for the automatically determned mask threshold. 1.0 works fine and is default. If flashlight is used, the 0.6 is a good choice.' 
-        print '<excised root> 1 - excised root analysis is on, 0 - excised root analysis is off' 
-        print '<crown root> 1 - crown root analysis is on, 0 - crown root analysis is off' 
-        print '<segmentation> 1 -  is on, 0 - is off' 
+        print '<mask threshold> multiplier for the automatically determned mask threshold. 1.0 works fine and is default. If flashlight is used, the 0.6 is a good choice.'
+        print '<excised root> 1 - excised root analysis is on, 0 - excised root analysis is off'
+        print '<crown root> 1 - crown root analysis is on, 0 - crown root analysis is off'
+        print '<segmentation> 1 -  is on, 0 - is off, 2 - Only perform segmentation'
         print '<marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.'
         print '<stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off'
         print '<plots> 1 - plotting data is stored, 0 - plotting data is not stored'
@@ -581,13 +581,16 @@ def main(opt=None):
         
     elif int(options[6][1]) == 1:
         threadSegmentation(options[11][1],options[1][1],ID,int(options[4][1]),rootCrown,float(options[7][1])>0.0)
+        if(int(options[6][1]) == 2):
+            exit()
         outfile=open(os.path.join(io.getHomePath(), 'tmp', 'para.sav'), 'wb')
         pickle.dump(allPara,outfile)
         outfile.close()
-    else: print'The segmentation switch must be 0 or 1'
-    
-    if int(options[5][1]) != 0 or int(options[4][1]) != 0: 
-        
+
+    else: print'The segmentation switch must be 0, 1, or 2'
+
+    if int(options[5][1]) != 0 or int(options[4][1]) != 0:
+
         print 'Start Root Analysis'
         threadCrown(os.path.join(options[11][1], str(ID)))
         print "Exiting Root Analysis"
