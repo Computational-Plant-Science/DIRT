@@ -413,13 +413,14 @@ class Analysis(object):
                 
                 normWhite=1
                 normBlack=1
-                if width > 0: 
+
+                if width > 0:
                     normWhite=float(white)/float(width)
-		    if normWhite==1: normWhite=0.
-                    if black >1: normBlack=float(black)/float(width)
+                    if normWhite==1.: normWhite=0.
+                    if black >0: normBlack=float(black)/float(width)
                     else: normBlack=1.
-                
-                densityArray.append(float(normWhite)/float(normBlack))
+
+                    if normWhite>0.: densityArray.append(float(normWhite)/float(normBlack))
             except:
                 densityArray.append(float(0.0))
                 print 'empty image line in crown file -> placed 0. as density for this line'
