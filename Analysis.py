@@ -414,10 +414,10 @@ class Analysis(object):
                 normWhite=1
                 normBlack=1
 
-                if width > 0:
-                    normWhite=float(white)/float(width)
+                if w > 0:
+                    normWhite=float(white)/float(w)
                     if normWhite==1.: normWhite=0.
-                    if black >0: normBlack=float(black)/float(width)
+                    if black >0: normBlack=float(black)/float(w)
                     else: normBlack=1.
 
                     if normWhite>0.: densityArray.append(float(normWhite)/float(normBlack))
