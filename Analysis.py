@@ -432,7 +432,8 @@ class Analysis(object):
         ysmooth = yy
         smoothRegion=15
         xxNorm=np.array(xx)/np.max(xx)
-        tenPercent=float(len(yy))*0.1
+        #changed to 1% for experiment 
+        tenPercent=float(len(yy))*0.01
         # retrieve stem diameter as the average if the distance field in the first 10%
         try:
          stemDia=np.median(xx[20:int(tenPercent)])
@@ -440,8 +441,11 @@ class Analysis(object):
          stemDia=-1
         # compute a simple angle at top and bottom along the outline for monocots (note this is more noisy than the D10 or D20 values that are more robust)
         try:
+         #changed to 1 to 3%
          angleSimple=self.getAngleToXAxXY(xx[int(tenPercent):int(tenPercent)*3], yy[int(tenPercent):int(tenPercent)*3], ransacFitting=True)
-         angleSimpleBottom=self.getAngleToXAxXY(xx[int(tenPercent)*3:int(tenPercent)*9], yy[int(tenPercent)*3:int(tenPercent)*9], ransacFitting=True)
+
+         #changed to 3-5%
+         angleSimpleBottom=self.getAngleToXAxXY(xx[int(tenPercent)*3:int(tenPercent)*5], yy[int(tenPercent)*3:int(tenPercent)*5], ransacFitting=True)
         except:
          angleSimple=-1
          angleSimpleBottom=-1
