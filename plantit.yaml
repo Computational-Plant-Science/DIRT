@@ -1,0 +1,18 @@
+name: DIRT
+author: Alexander Bucksch
+public: True
+clone: True
+image: Computational-Plant-Science/DIRT
+commands: python /opt/DIRT/main.py "$"
+params:
+  - MASK_THRESHOLD=1.0
+  - EXCISED_ROOTS=0
+  - CROWN_ROOT=1
+  - SEGMENTATION=1
+  - MARKER_DIAMETER=0
+  - STEM_RECONSTRUCTION=0
+  - PLOTS=1
+  - OUTPUT_FORMAT=1
+  - TRAIT_FILE_PATH=traits.csv
+from: File
+to: Directory
