@@ -14,5 +14,6 @@ params:
   - PLOTS=1
   - OUTPUT_FORMAT=1
   - TRAIT_FILE=traits.csv
+logo: dirt_logo.png
 from: File
 to: Directory
