@@ -17,3 +17,8 @@ params:
 logo: dirt_logo.png
 from: File
 to: Directory
+resources:
+  time: "03:00:00"
+  mem: "5GB"
+  tasks: 1
+  cores: 1
