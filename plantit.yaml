@@ -13,7 +13,7 @@ params:
   - STEM_RECONSTRUCTION=0
   - PLOTS=1
   - OUTPUT_FORMAT=1
-  - TRAIT_FILE=traits.csv
+  - TRAIT_FILE=DIRT/traits.csv
 logo: dirt_logo.jpg
 from: 
 to:
