@@ -17,7 +17,7 @@ params:
 logo: dirt_logo.jpg
 input:
   path:
-  kind: file
+  kind: files
   filetypes:
     - jpg
     - png
