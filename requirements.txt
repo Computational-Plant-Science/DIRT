@@ -1,4 +1,6 @@
-Cython==0.28.3
-mahotas==1.4.4
-numpy==1.10.1
-scipy==0.14.0
+wheel
+Cython
+mahotas
+numpy
+scipy
+certifi

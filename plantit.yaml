@@ -15,8 +15,18 @@ params:
   - OUTPUT_FORMAT=1
   - TRAIT_FILE=DIRT/traits.csv
 logo: dirt_logo.jpg
-from: 
-to:
+input:
+  path:
+  kind: file
+  filetypes:
+    - jpg
+    - png
+    - tif
+output:
+  path:
+  include: 
+    names:
+      - output.csv
 resources:
   time: "03:00:00"
   mem: "5GB"
