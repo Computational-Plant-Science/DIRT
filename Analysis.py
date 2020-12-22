@@ -217,11 +217,11 @@ class Analysis(object):
 
         print('avg. Length: ' + str(avgLength))
         try:
-            self.__io.saveArray(lengthArr, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_LengthHist')
+            self.__io.saveArray(lengthArr, self.__io.getFileName() + '_LengthHist')
 
             f2 = scipy.interpolate.interp1d(x, lengthArr, kind='cubic')
-            self.__io.saveArray(x, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_LengthX')
-            self.__io.saveArray(f2(x), self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_LengthY')
+            self.__io.saveArray(x, self.__io.getFileName() + '_LengthX')
+            self.__io.saveArray(f2(x), self.__io.getFileName() + '_LengthY')
 
         except:
             pass
@@ -236,7 +236,7 @@ class Analysis(object):
             for j in i:
                 imgDebug[j[1]][j[0]] = 255
                 lengthArr.append(length)
-            imageio.imwrite(self.__io.getHomePath() + 'Result/' + str(j[1]) + ' ' + str(j[0]) + 'DebugThickP.png',
+            imageio.imwrite(str(j[1]) + ' ' + str(j[0]) + 'DebugThickP.png',
                               imgDebug)
             self.__io.writeServerFile(self.__io.getHomePath(), 'dirt_out.csv',
                                       self.__io.getHomePath() + 'Result/' + self.__io.getFileName() + 'DebugThickP.png,' + str(
@@ -245,10 +245,10 @@ class Analysis(object):
         print('avg. Length: ' + str(avgLength))
 
         self.__io.saveArray(lengthArr,
-                            self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_LateralLengthHisto')
+                            self.__io.getFileName() + '_LateralLengthHisto')
         self.__io.saveArray(range(0, len(lengthArr)),
-                            self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_LateralLengthX')
-        self.__io.saveArray(lengthArr, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_LateralLengthY')
+                            self.__io.getFileName() + '_LateralLengthX')
+        self.__io.saveArray(lengthArr, self.__io.getFileName() + '_LateralLengthY')
 
     def getSymmetry(self, rtps, G):
         vprop = G.vertex_properties["vp"]
@@ -295,7 +295,7 @@ class Analysis(object):
             ang = self.getAngleBetweenPaths(tangents[i], lat[i], G)
             angles.append(ang)
         try:
-            self.__io.saveArray(angles, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_AngleHisto')
+            self.__io.saveArray(angles, self.__io.getFileName() + '_AngleHisto')
             minAngle = np.min(angles)
             maxAngle = np.max(angles)
             angRange = maxAngle - minAngle
@@ -338,11 +338,11 @@ class Analysis(object):
 
         besty = np.polyval(coeffs, x)
 
-        self.__io.saveArray(x, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_DiameterX')
-        self.__io.saveArray(y, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_DiameterY')
+        self.__io.saveArray(x, self.__io.getFileName() + '_DiameterX')
+        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterY')
 
         avgDiameter = np.average(y)
-        self.__io.saveArray(y, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_DiameterHisto')
+        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterHisto')
         return avgDiameter, coeffs[0]
 
     def getDiameterQuantilesAlongSinglePath(self, path, G, counter=None):
@@ -361,8 +361,8 @@ class Analysis(object):
 
         besty = np.polyval(coeffs, x)
 
-        self.__io.saveArray(x, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_DiameterX')
-        self.__io.saveArray(y, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_DiameterY')
+        self.__io.saveArray(x, self.__io.getFileName() + '_DiameterX')
+        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterY')
 
         l = len(y) - 1
         l25 = int(l * 0.25)
@@ -375,7 +375,7 @@ class Analysis(object):
         d75 = np.average(y[l50:l75])
         d90 = np.average(y[l90:])
 
-        self.__io.saveArray(y, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_DiameterHistoTP')
+        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterHistoTP')
 
         return d25, d50, d75, d90
 
@@ -462,8 +462,8 @@ class Analysis(object):
                 tmp.append(yy[i + j])
                 tmp.append(yy[i - j])
             ysmooth[i] = np.median(tmp)
-        self.__io.saveArray(xxNorm, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_HeightWidthX')
-        self.__io.saveArray(ysmooth, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_HeightWidthY')
+        self.__io.saveArray(xxNorm, self.__io.getFileName() + '_HeightWidthX')
+        self.__io.saveArray(ysmooth, self.__io.getFileName() + '_HeightWidthY')
 
         # compute the width parameters of the root
         medianWidth = np.median(ysmooth)
@@ -493,8 +493,8 @@ class Analysis(object):
         # Dslope=self.filterCDFTAngentSlope(xxNorm,ysmoothCS, range(len(ysmoothCS)),200)
 
         # save the data for plotting
-        self.__io.saveArray(xxNorm, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_HeightWidthCSX')
-        self.__io.saveArray(ysmoothCS, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_HeightWidthCSY')
+        self.__io.saveArray(xxNorm, self.__io.getFileName() + '_HeightWidthCSX')
+        self.__io.saveArray(ysmoothCS, self.__io.getFileName() + '_HeightWidthCSY')
         # self.__io.saveArray(Dslope,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSX')
         # self.__io.saveArray(ysmoothCS,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSY')
 
@@ -528,7 +528,7 @@ class Analysis(object):
                 angelsAtDist.append(angAtDist)
 
         self.__io.saveArray(angelsAtDist,
-                            self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_AngleHistoAtDist')
+                            self.__io.getFileName() + '_AngleHistoAtDist')
         return np.mean(angelsAtDist)
 
     def calculateAngleQuantiles(self, thickestPath, lat, corrBranchpts, G, counter=None):
@@ -554,10 +554,10 @@ class Analysis(object):
             angles75.append(ang75)
             angles90.append(ang90)
 
-        self.__io.saveArray(angles25, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_AngleHisto25')
-        self.__io.saveArray(angles50, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_AngleHisto50')
-        self.__io.saveArray(angles75, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_AngleHisto75')
-        self.__io.saveArray(angles90, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_AngleHisto90')
+        self.__io.saveArray(angles25, self.__io.getFileName() + '_AngleHisto25')
+        self.__io.saveArray(angles50, self.__io.getFileName() + '_AngleHisto50')
+        self.__io.saveArray(angles75, self.__io.getFileName() + '_AngleHisto75')
+        self.__io.saveArray(angles90, self.__io.getFileName() + '_AngleHisto90')
 
         return angles25, angles50, angles75, angles90
 
@@ -569,7 +569,7 @@ class Analysis(object):
         for i in range(len(lat)):
             ang = self.getAngleToXAx(G, lat[i])
             angles.append(ang)
-        self.__io.saveArray(angles, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_AngleHistoN')
+        self.__io.saveArray(angles, self.__io.getFileName() + '_AngleHistoN')
         #        f=p.figure()
         #        ax = f.add_subplot(111)
         #        p.hist(angles,bins=9, range=(0, 90))
@@ -689,10 +689,10 @@ class Analysis(object):
                 cY[nc].append(i[1])
         for nc in range(nrOfClusters):
             self.__io.saveArray(cX[nc],
-                                self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_PathsDiaAx_' + str(
+                                self.__io.getFileName() + '_PathsDiaAx_' + str(
                                     nrOfClusters) + '_' + str(nc))
             self.__io.saveArray(cY[nc],
-                                self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_PathsDiaAy_' + str(
+                                self.__io.getFileName() + '_PathsDiaAy_' + str(
                                     nrOfClusters) + '_' + str(nc))
 
         if nrOfClusters == 2:
@@ -769,8 +769,8 @@ class Analysis(object):
             if vprop[i]['nrOfPaths'] <= fiftyPercentRtp:
                 fiftyPercentDrop = vprop[i]['coord'][1]
 
-        self.__io.saveArray(nrOfP, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_RTPDepthX')
-        self.__io.saveArray(depth, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_RTPDepthY')
+        self.__io.saveArray(nrOfP, self.__io.getFileName() + '_RTPDepthX')
+        self.__io.saveArray(depth, self.__io.getFileName() + '_RTPDepthY')
 
         return fiftyPercentDrop
 

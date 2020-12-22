@@ -106,7 +106,7 @@ class Preprocessing(object):
         print('make mask')
         imgBinary = mask.calculateMask(imgGrey)
         print('saving binary mask')
-        imageio.imwrite(self.__io.getHomePath() + '/Mask/' + self.__io.getFileName() + '.png', skimage.img_as_uint(imgBinary))
+        imageio.imwrite(self.__io.getFileName() + '.mask.png', skimage.img_as_uint(imgBinary))
         pathold = os.getcwd()
         os.chdir(self.__io.getHomePath())
         self.__io.writeServerFile('dirt_out.csv',
@@ -161,8 +161,8 @@ class Preprocessing(object):
                 if exRIdx != -1:
                     print('found excised root ' + str(i))
                     try:
-                        imageio.imwrite(self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
-                            centerPtx) + '_' + str(centerPty) + '.png', imgExRoot)
+                        imageio.imwrite(self.__io.getFileName() + '_' + str(
+                            centerPtx) + '_' + str(centerPty) + '.lateral.png', imgExRoot)
                         print('excised root ' + str(i) + 'saved')
                     except:
                         print('NOT SAVED !!!')
@@ -187,8 +187,8 @@ class Preprocessing(object):
                 try:
                     pathold = os.getcwd()
                     os.chdir(self.__io.getHomePath())
-                    imageio.imwrite(self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
-                        centerPtx) + '_' + str(centerPty) + '.png', imgExRoot)
+                    imageio.imwrite(self.__io.getFileName() + '_' + str(
+                        centerPtx) + '_' + str(centerPty) + '.lateral.png', imgExRoot)
                     print('excised root saved')
                     self.__io.writeServerFile('dirt_out.csv',
                                               self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
@@ -206,8 +206,8 @@ class Preprocessing(object):
                 try:
                     pathold = os.getcwd()
                     os.chdir(self.__io.getHomePath())
-                    imageio.imwrite(self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
-                        centerPtx) + '_' + str(centerPty) + '.png', imgExRoot)
+                    imageio.imwrite(self.__io.getFileName() + '_' + str(
+                        centerPtx) + '_' + str(centerPty) + '.lateral.png', imgExRoot)
                     print('excised root saved')
                     self.__io.writeServerFile('dirt_out.csv',
                                               self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
@@ -219,8 +219,8 @@ class Preprocessing(object):
                     print('NOT SAVED !!!!')
 
         if marker == True:
-            imageio.imwrite(self.__io.getHomePath() + '/Mask/' + self.__io.getFileName() + 'Circle.png', imgCircle)
-            imageio.imwrite(self.__io.getHomePath() + '/Mask/' + self.__io.getFileName() + 'Tag.png', skimage.img_as_uint(imgTag))
+            imageio.imwrite(self.__io.getFileName() + '.mask.circle.png', imgCircle)
+            imageio.imwrite(self.__io.getFileName() + '.mask.tag.png', skimage.img_as_uint(imgTag))
         # pathold=os.getcwd()
         # os.chdir(self.__io.getHomePath())
 
@@ -236,7 +236,7 @@ class Preprocessing(object):
             '''
             try:
                 print('root image to be saved')
-                imageio.imwrite(self.__io.getHomePath() + '/Crown/' + self.__io.getFileName() + '.png', imgRoot)
+                imageio.imwrite(self.__io.getFileName() + '.crown.png', imgRoot)
             except:
                 print('CROWN NOT SAVED')
                 raise

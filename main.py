@@ -317,7 +317,7 @@ def threadCrown(filepath):
                 currT = time.time()
                 skel = Skeleton.Skeleton(imgL)
                 testSkel, testDia = skel.skel(imgL)
-                imageio.imwrite(os.path.join(io.getHomePath(), 'Skeleton', io.getFileName() + '_skel.png'), skimage.img_as_uint(testSkel))
+                imageio.imwrite(io.getFileName() + '.skel.png', skimage.img_as_uint(testSkel))
                 print('Medial axis computed ' + str(time.time() - currT) + 's')
                 currT = time.time()
                 path, skelGraph, crownT['DIA_STM'], skelSize = seg.findThickestPath(testSkel, testDia, xScale, yScale)
@@ -363,7 +363,7 @@ def threadCrown(filepath):
 
                         currT = time.time()
                         segImg = seg.makeSegmentationPicture(path, rtpSkel, img, xScale, yScale, c1x, c1y, c2x, c2y)
-                        imageio.imwrite(io.getHomePath() + '/Result/' + io.getFileName() + 'Seg2.png', segImg)
+                        imageio.imwrite(io.getFileName() + 'Seg2.png', segImg)
                         crownT['ADVT_COUNT'], crownT['BASAL_COUNT'], crownT['NR_RTP_SEG_I'], crownT['NR_RTP_SEG_II'], \
                         crownT['HYP_DIA'], crownT['TAP_DIA'] = analysis.countRootsPerSegment(c1y, c2y, c1x, c2x)
                     except:
