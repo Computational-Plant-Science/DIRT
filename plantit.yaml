@@ -28,6 +28,9 @@ output:
   include: 
     names:
       - output.csv
+    patterns:
+      - png
+      - gz
 resources:
   time: "03:00:00"
   mem: "5GB"
