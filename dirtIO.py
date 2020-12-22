@@ -180,14 +180,15 @@ class IO(object):
         fout.close()
 
     def writeFile(self, para, traitsCrown, traitDict, all=False):
-        print("output directory: " + self.__path + "/output.csv")
+        outputpath = os.path.join(os.path.dirname(self.__path), "output.csv")
+        print("output directory: " + outputpath)
         try:
-            if os.path.isfile(self.__path + "/output.csv"):
-                fout = open(self.__path + "/output.csv", "a")
+            if os.path.isfile(outputpath):
+                fout = open(outputpath, "a")
             else:
                 raise
         except:
-            fout = open(self.__path + "/output.csv", "w")
+            fout = open(outputpath, "w")
             for i in self.__parameters:
                 fout.write(str(i) + ',')
             for k, v in traitDict.items():
