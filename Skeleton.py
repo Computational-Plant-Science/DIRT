@@ -56,27 +56,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import mahotas as m
 import numpy as np
 
+
 class Skeleton(object):
     '''
     classdocs
     '''
 
-
-    def __init__(self,img):
+    def __init__(self, img):
         '''
         Constructor
         '''
-        self.__img=img
-    
+        self.__img = img
+
     def skel(self, img):
-        img[0,:]=0 # make 1st line in the image black to achieve consistent result between distance field and medial axis skeleton.
-        img[len(img)-1,:]=0 # make last line in the image black to achieve consistent result between distance field and medial axis skeleton.
-        img[:,len(img[0])-1]=0 # make right column in the image black to achieve consistent result between distance field and medial axis skeleton.
-        img[:,0]=0 # make left column in the image black to achieve consistent result between distance field and medial axis skeleton.
-        dmap = m.distance(img>0,metric='euclidean')
-        dmap=np.sqrt(dmap)*2
-        skelImg=m.thin(img>0)
-        
+        img[0,
+        :] = 0  # make 1st line in the image black to achieve consistent result between distance field and medial axis skeleton.
+        img[len(img) - 1,
+        :] = 0  # make last line in the image black to achieve consistent result between distance field and medial axis skeleton.
+        img[:, len(img[
+                       0]) - 1] = 0  # make right column in the image black to achieve consistent result between distance field and medial axis skeleton.
+        img[:,
+        0] = 0  # make left column in the image black to achieve consistent result between distance field and medial axis skeleton.
+        dmap = m.distance(img > 0, metric='euclidean')
+        dmap = np.sqrt(dmap) * 2
+        skelImg = m.thin(img > 0)
+
         return skelImg, dmap
-    
-    

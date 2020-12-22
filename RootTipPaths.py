@@ -51,6 +51,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 '''
+import sys
+import traceback
 
 '''
 # external library imports
@@ -64,180 +66,191 @@ import graph_tool.topology as gt
 '''
 import time
 
+
 class RootTipPaths(object):
     '''
     classdocs
     '''
-    
 
     def __init__(self, io):
         '''
         Constructor
         '''
-        self.__RTP=[]
-        self.__io=io
-        self.__id=io.getID()
-        self.__currentIdx=io.getCurrentID()
-        self.__medianTipDiameter=0.0
-        self.__meanTipDiameter=0.0
-        self.__90TipDiameter=0.0
-        self.__expF=0.0
-        self.__tips=[]
-        self.__rootingDepth=0.0
-        self.__rootWidth=0.0
-    def compareTwoOrderedLists(self,l1,l2):
-        
-        if len(l1)>len(l2): l1=l1[:len(l2)]
-        if len(l1)<len(l2): l2=l2[:len(l1)]
-        half=len(l1)/2
-        split=0
-        
+        self.__RTP = []
+        self.__io = io
+        self.__id = io.getID()
+        self.__currentIdx = io.getCurrentID()
+        self.__medianTipDiameter = 0.0
+        self.__meanTipDiameter = 0.0
+        self.__90TipDiameter = 0.0
+        self.__expF = 0.0
+        self.__tips = []
+        self.__rootingDepth = 0.0
+        self.__rootWidth = 0.0
+
+    def compareTwoOrderedLists(self, l1, l2):
+
+        if len(l1) > len(l2): l1 = l1[:len(l2)]
+        if len(l1) < len(l2): l2 = l2[:len(l1)]
+        half = len(l1) // 2
+        split = 0
+
         if l1[half] == l2[half]:
-            if half==0: return 0
-            elif half==len(l1)-1:return len(l1)-1
-            elif l1[half+1] == l2[half+1]:
-                split=self.compareTwoOrderedLists(l1[half:],l2[half:])
-            else: 
-                split=0
-            return half+split
+            if half == 0:
+                return 0
+            elif half == len(l1) - 1:
+                return len(l1) - 1
+            elif l1[half + 1] == l2[half + 1]:
+                split = self.compareTwoOrderedLists(l1[half:], l2[half:])
+            else:
+                split = 0
+            return half + split
         else:
-            if half==0: return -1
-            split=self.compareTwoOrderedLists(l1[:half],l2[:half])
+            if half == 0: return -1
+            split = self.compareTwoOrderedLists(l1[:half], l2[:half])
             return split
+
     def getAllTips(self):
         return self.__tips
-    def model_func(self,t, A, K, C):
+
+    def model_func(self, t, A, K, C):
         return A * np.exp(K * t) + C
-    def model_func_dia(self,t, A, K, C, dia):
-        return A * dia**(K * t) + C
-    def fit_exp_nonlinear(self,t, y,dia):
+
+    def model_func_dia(self, t, A, K, C, dia):
+        return A * dia ** (K * t) + C
+
+    def fit_exp_nonlinear(self, t, y, dia):
         opt_parms, _ = sp.curve_fit(self.model_func, t, y, maxfev=100000)
         A, K, C = opt_parms
         fit_y = self.model_func(t, A, K, C)
-        return fit_y  ,A,K,C 
-    def fit_exp_linear(self, t, y, C,dia):
+        return fit_y, A, K, C
+
+    def fit_exp_linear(self, t, y, C, dia):
         y = np.array(y) - C
         y = np.log(y)
         K, A_log = np.polyfit(t, y, 1)
         A = np.exp(A_log)
         fit_y = self.model_func(np.array(t), A, K, C)
-        return fit_y  ,A,K,C 
-    def getRootTipPaths(self,thickestPath,G):
+        return fit_y, A, K, C
+
+    def getRootTipPaths(self, thickestPath, G):
         print('Calculating Root-Tip Paths')
 
-        CPVIDX=[]
+        CPVIDX = []
         for i in thickestPath:
             CPVIDX.append(G.vertex_index[i])
-        vprop=G.vertex_properties["vp"]
-        eprop=G.edge_properties["ep"]
-        epropW=G.edge_properties["w"]
+        vprop = G.vertex_properties["vp"]
+        eprop = G.edge_properties["ep"]
+        epropW = G.edge_properties["w"]
         if len(self.__RTP) == 0:
-            tips= self.getTips(thickestPath,G)
-            RTP=[]
-            #print '***** TIPS VAR ******'
-            #print tips
-            if tips ==-1:
-                print 'ERROR: No tips found'
+            tips = self.getTips(thickestPath, G)
+            RTP = []
+            # print '***** TIPS VAR ******'
+            # print tips
+            if tips == -1:
+                print('ERROR: No tips found')
                 return -1
             try:
                 tips.remove(G.vertex_index(thickestPath[0]))
             except:
                 pass
-            
-            percentOld=0
-            for idx,i in enumerate(tips):
 
-                percent=(float(idx)/float(len(tips)))*100
-                if percentOld+5< percent: 
-                    print (str(np.round(percent,1))+'% '),
-                    percentOld=percent
+            percentOld = 0
+            for idx, i in enumerate(tips):
+
+                percent = (float(idx) / float(len(tips))) * 100
+                if percentOld + 5 < percent:
+                    print(str(np.round(percent, 1)) + '% '),
+                    percentOld = percent
                 try:
-                    path,edges=gt.shortest_path(G, thickestPath[0], G.vertex(i) , weights=epropW, pred_map=None)
-                    RTPTmp=[]
-                    for k in path: 
+                    path, edges = gt.shortest_path(G, thickestPath[0], G.vertex(i), weights=epropW, pred_map=None)
+                    RTPTmp = []
+                    for k in path:
                         RTPTmp.append(G.vertex_index[k])
-                    split=self.compareTwoOrderedLists(CPVIDX, RTPTmp)
+                    split = self.compareTwoOrderedLists(CPVIDX, RTPTmp)
                     RTP.append(RTPTmp[split:])
-                    
-                    
+
                     for j in reversed(path):
-                        vprop[j]['nrOfPaths']+=1
+                        vprop[j]['nrOfPaths'] += 1
                     for j in edges:
-                        eprop[j]['RTP']=True
+                        eprop[j]['RTP'] = True
                 except:
-                    print 'ERROR: in def getRootTipPaths(self,thickestPath,G): no dijkstra path at '+str(idx)+' in tips'
+                    print(traceback.format_exc())
+                    print('ERROR: in def getRootTipPaths(self,thickestPath,G): no dijkstra path at ' + str(
+                        idx) + ' in tips')
                     pass
-            print 'Number of Root-Tip Paths: '+str(len(RTP))
-            self.__RTP=RTP
-        print 'RTP done!'
-        return RTP,tips
-    
-    def getTips(self,thickestPath,G,counter=None):
+            print('Number of Root-Tip Paths: ' + str(len(RTP)))
+            self.__RTP = RTP
+        print('RTP done!')
+        return RTP, tips
+
+    def getTips(self, thickestPath, G, counter=None):
         tips = []
-        tipDia= []
-        tipHeight=[]
-        rootW=[]
-        vprop=G.vertex_properties["vp"]
+        tipDia = []
+        tipHeight = []
+        rootW = []
+        vprop = G.vertex_properties["vp"]
         for i in G.vertices():
-            count=0
+            count = 0
             for _ in i.out_neighbours():
-                count+=1
+                count += 1
             if count == 3:
                 rootW.append(vprop[i]['coord'][1])
-            if count<=1:
-                if i!= thickestPath[len(thickestPath)-1]: 
+            if count <= 1:
+                if i != thickestPath[len(thickestPath) - 1]:
                     tips.append(G.vertex_index[i])
                     tipDia.append(vprop[i]['diameter'])
                     tipHeight.append(vprop[i]['coord'][0])
-        self.__medianTipDiameter=np.median(tipDia)
-        print 'Median Tip Diameter: '+str(self.__medianTipDiameter)
-        self.__meanTipDiameter=np.mean(tipDia)
-        print 'Mean Tip Diameter: '+str(self.__meanTipDiameter)
-        self.__io.saveArray(tipDia,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_TipDiaHisto')
-        self.__io.saveArray(tipDia,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_TipDiaHeightX')
-        self.__io.saveArray(tipHeight,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_TipDiaHeightY')
+        self.__medianTipDiameter = np.median(tipDia)
+        print('Median Tip Diameter: ' + str(self.__medianTipDiameter))
+        self.__meanTipDiameter = np.mean(tipDia)
+        print('Mean Tip Diameter: ' + str(self.__meanTipDiameter))
+        self.__io.saveArray(tipDia, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_TipDiaHisto')
+        self.__io.saveArray(tipDia, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_TipDiaHeightX')
+        self.__io.saveArray(tipHeight, self.__io.getHomePath() + 'Plots/' + self.__io.getFileName() + '_TipDiaHeightY')
 
         try:
-             percent90=np.max(tipHeight)*0.9
-             idx = list(np.where(tipHeight>=percent90)[0])
-             tmpdia90=[]
-             for i in idx:
-                 tmpdia90.append(tipDia[i])
-        
-             if tmpdia90:
-                dia90=np.max(tmpdia90)
-             else:
-                dia90 = 0
-             self.__90TipDiameter=dia90
-             if tipDia:
-                self.__90TipDiameter=np.max(tipDia)
-             else:
-                self.__90TipDiameter=0
-             if tipHeight:
-                self.__rootingDepth=np.max(tipHeight)
-             else:
-                self.__rootingDepth=0
-             if rootW:
-                self.__rootWidth=np.max(rootW)-np.min(rootW)
-             else:
-                self.__rootWidth=0
-        except:
-           pass
-        return tips
-                
-    def getRTPSkeleton(self,thickestPath,G,newRTp=False):
-        eprop=G.edge_properties["ep"]
-        if newRTp==True: self.__RTP=[]
-        if len(self.__RTP) == 0: 
-            startT=time.time()
-            RTP,tips = self.getRootTipPaths(thickestPath, G)
-            self.__RTP=RTP
-            print 'RTPs computed in ' +str(time.time()-startT)+'s'
-        print 'calculating RTP Skeleton'
+            percent90 = np.max(tipHeight) * 0.9
+            idx = list(np.where(tipHeight >= percent90)[0])
+            tmpdia90 = []
+            for i in idx:
+                tmpdia90.append(tipDia[i])
 
-        rtpSkel=G.copy()
+            if tmpdia90:
+                dia90 = np.max(tmpdia90)
+            else:
+                dia90 = 0
+            self.__90TipDiameter = dia90
+            if tipDia:
+                self.__90TipDiameter = np.max(tipDia)
+            else:
+                self.__90TipDiameter = 0
+            if tipHeight:
+                self.__rootingDepth = np.max(tipHeight)
+            else:
+                self.__rootingDepth = 0
+            if rootW:
+                self.__rootWidth = np.max(rootW) - np.min(rootW)
+            else:
+                self.__rootWidth = 0
+        except:
+            pass
+        return tips
+
+    def getRTPSkeleton(self, thickestPath, G, newRTp=False):
+        eprop = G.edge_properties["ep"]
+        if newRTp == True: self.__RTP = []
+        if len(self.__RTP) == 0:
+            startT = time.time()
+            RTP, tips = self.getRootTipPaths(thickestPath, G)
+            self.__RTP = RTP
+            print('RTPs computed in ' + str(time.time() - startT) + 's')
+        print('calculating RTP Skeleton')
+
+        rtpSkel = G.copy()
         for e in G.edges():
-            if eprop[e]['RTP']==False:
+            if eprop[e]['RTP'] == False:
                 rtpSkel.remove_edge(e)
-                
-        return rtpSkel,len(self.__RTP),self.__medianTipDiameter,self.__meanTipDiameter,self.__90TipDiameter,self.__RTP,tips,self.__rootingDepth,self.__rootWidth
+
+        return rtpSkel, len(
+            self.__RTP), self.__medianTipDiameter, self.__meanTipDiameter, self.__90TipDiameter, self.__RTP, tips, self.__rootingDepth, self.__rootWidth

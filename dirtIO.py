@@ -67,7 +67,7 @@ class IO(object):
     '''
     classdocs
     '''
-    
+
     __instance = None
 
     ## Class used with this Python singleton design pattern
@@ -77,138 +77,147 @@ class IO(object):
             ## a foo class variable
             self.__path = None
             self.__name = None
-    
-    def __init__(self,homePath=None,name=None,ID=None,plots=True):
+
+    def __init__(self, homePath=None, name=None, ID=None, plots=True):
         '''
         Constructor
         '''
-        self.__plots=plots
-        self.__id=ID
-        self.__currentID=None
+        self.__plots = plots
+        self.__id = ID
+        self.__currentID = None
         self.__path = homePath
         self.__name = name
-        self.__serverPath=None
-        self.__parameters=['Image ID','Image name','Failed',
-                           'Experiment number',
-                    'circle ratio',
-                    'x pixel',
-                    'y pixel',
-                    'xScale',
-                    'yScale','computation time','Skeleton Vertices']
-        
-    def setServerPath(self,p):
-        self.__serverPath=p    
-    def setFileName(self,name):
+        self.__serverPath = None
+        self.__parameters = ['Image ID', 'Image name', 'Failed',
+                             'Experiment number',
+                             'circle ratio',
+                             'x pixel',
+                             'y pixel',
+                             'xScale',
+                             'yScale', 'computation time', 'Skeleton Vertices']
+
+    def setServerPath(self, p):
+        self.__serverPath = p
+
+    def setFileName(self, name):
         self.__name = name
+
     def getFileName(self):
-        return self.__name    
+        return self.__name
+
     def getHomePath(self):
         return self.__path
+
     def getID(self):
         return self.__id
+
     def getCurrentID(self):
         return self.__currentID
-    def setidIdx(self,idx):
-        self.__currentID=idx
-    def setHomePath(self,homePath): 
-        self.__path = homePath
-    
-    def scanDir(self,directory=0):
 
-        scanPath=''
-        if directory==0: scanPath=self.__path
-        else: scanPath = directory
+    def setidIdx(self, idx):
+        self.__currentID = idx
+
+    def setHomePath(self, homePath):
+        self.__path = homePath
+
+    def scanDir(self, directory=0):
+
+        scanPath = ''
+        if directory == 0:
+            scanPath = self.__path
+        else:
+            scanPath = directory
         files = []
-        print os.getcwd()
+        print(os.getcwd())
         listing = os.listdir(scanPath)
         for infile in listing:
             if os.path.isdir(scanPath + infile) == True:
-                print infile + ' is not a file'
-            elif infile[0]=='.':
-                print infile + ' is not a file'
-            elif infile[len(infile)-4:]=='.ini':
-                print infile + ' is not a file'
-            elif infile[len(infile)-4:]=='.csv':
-                print infile + ' is not a file'
+                print(infile + ' is not a file')
+            elif infile[0] == '.':
+                print(infile + ' is not a file')
+            elif infile[len(infile) - 4:] == '.ini':
+                print(infile + ' is not a file')
+            elif infile[len(infile) - 4:] == '.csv':
+                print(infile + ' is not a file')
             else:
-                print "current file is: " + infile
-                files.append(scanPath+'/'+infile) 
+                print("current file is: " + infile)
+                files.append(scanPath + '/' + infile)
         return files
-    
-    def writeServerFile(self,serverFile,string):
-        path=self.__serverPath
-        print "server file (working directory): "+str(os.getcwd())
-        print "server file (relative): "+str(path)
+
+    def writeServerFile(self, serverFile, string):
+        path = self.__serverPath
+        print("server file (working directory): " + str(os.getcwd()))
+        print("server file (relative): " + str(path))
         try:
-            if os.path.isfile(path+serverFile):
-                fout=open(path+serverFile, "a")
-            else: 
+            if os.path.isfile(path + serverFile):
+                fout = open(path + serverFile, "a")
+            else:
                 raise
         except:
-            fout = open(path+serverFile, "w")
+            fout = open(path + serverFile, "w")
             fout.write('# File path, image id, type')
             fout.write('\n')
-           
+
         fout.write(string)
         fout.write('\n')
         fout.close()
-    def writeRunFile(self,runfile,string):
 
-        path=self.__serverPath+'/'
+    def writeRunFile(self, runfile, string):
+
+        path = self.__serverPath + '/'
         try:
-            if os.path.isfile(path+'dirtRun.csv'):
-                fout=open(path+'dirtRun.csv', "a")
-            else: raise
+            if os.path.isfile(path + 'dirtRun.csv'):
+                fout = open(path + 'dirtRun.csv', "a")
+            else:
+                raise
         except:
-            fout = open(path+'dirtRun.csv', "w")
+            fout = open(path + 'dirtRun.csv', "w")
             fout.write('# File path, image id')
             fout.write('\n')
-            
-           
-        fout.write(runfile+', '+string)
+
+        fout.write(runfile + ', ' + string)
         fout.write('\n')
         fout.close()
-    def writeFile(self,para,traitsCrown,traitDict,all=False):
-        print "output directory: "+self.__path+"/output.csv"
+
+    def writeFile(self, para, traitsCrown, traitDict, all=False):
+        print("output directory: " + self.__path + "/output.csv")
         try:
-            if os.path.isfile(self.__path+"/output.csv"):
-                fout=open(self.__path+"/output.csv", "a")
-            else: raise
+            if os.path.isfile(self.__path + "/output.csv"):
+                fout = open(self.__path + "/output.csv", "a")
+            else:
+                raise
         except:
-            fout = open(self.__path+"/output.csv", "w")
+            fout = open(self.__path + "/output.csv", "w")
             for i in self.__parameters:
-                    fout.write(str(i)+',')
-            for k,v in traitDict.iteritems():
-                if all==False:
-                    if v==True:
+                fout.write(str(i) + ',')
+            for k, v in traitDict.items():
+                if all == False:
+                    if v == True:
                         if k in traitsCrown:
-                            fout.write(str(k)+',')
+                            fout.write(str(k) + ',')
                 else:
-                    fout.write(str(k)+',')
-                    
-                    
+                    fout.write(str(k) + ',')
+
             fout.write('\n')
 
         for i in para:
-                    fout.write(str(i)+',')
-        for k,v in traitDict.iteritems():
-                if v==True and k in traitsCrown:
-                    fout.write(str(traitsCrown[k])+',')
-                elif all==True:
-                    fout.write(str(' ,'))
-                
+            fout.write(str(i) + ',')
+        for k, v in traitDict.items():
+            if v == True and k in traitsCrown:
+                fout.write(str(traitsCrown[k]) + ',')
+            elif all == True:
+                fout.write(str(' ,'))
+
         fout.write('\n')
         fout.close()
-        
-    def saveArray(self,arr,name):
-        if self.__plots==False: return 0
+
+    def saveArray(self, arr, name):
+        if self.__plots == False: return 0
         try:
-            np.savetxt(name+'.gz',arr,delimiter=',')
+            np.savetxt(name + '.gz', arr, delimiter=',')
             try:
-                self.writeServerFile('dirt_out.csv',os.getcwd()+name[1:]+'.gz'+','+str(self.__id)+',1')
+                self.writeServerFile('dirt_out.csv', os.getcwd() + name[1:] + '.gz' + ',' + str(self.__id) + ',1')
             except:
                 raise
         except:
             raise
-        
-        

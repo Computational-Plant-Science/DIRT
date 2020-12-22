@@ -59,7 +59,7 @@ __all__ = ['fix_orientation']
 
 # PIL's Error "Suspension not allowed here" work around:
 # s. http://mail.python.org/pipermail/image-sig/1999-August/000816.html
-ImageFile.MAXBLOCK = 1024*1024
+ImageFile.MAXBLOCK = 1024 * 1024
 
 # The EXIF tag that holds orientation data.
 EXIF_ORIENTATION_TAG = 274
@@ -77,6 +77,7 @@ ORIENTATIONS = {
     8: ("Rotated 270 degrees", -270)
 }
 
+
 def fix_orientation(img, save_over=False):
     """
     `img` can be an Image instance or a path to an image file.
@@ -92,10 +93,10 @@ def fix_orientation(img, save_over=False):
     try:
         orientation = img._getexif()[EXIF_ORIENTATION_TAG]
     except (TypeError, AttributeError, KeyError):
-        print "WARNING: Image file has no EXIF data."
-        orientation=-1
+        print("WARNING: Image file has no EXIF data.")
+        orientation = -1
         pass
-    if orientation in [3,6,8]:
+    if orientation in [3, 6, 8]:
         degrees = ORIENTATIONS[orientation][1]
         img = img.rotate(degrees)
         if save_over and path is not None:

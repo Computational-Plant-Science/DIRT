@@ -2,7 +2,7 @@ name: DIRT
 author: Alexander Bucksch
 public: True
 clone: True
-image: shub://Computational-Plant-Science/DIRT
+image: docker://computationalplantscience/dirt
 commands: python /opt/DIRT/main.py "$INPUT" 0 "$MASK_THRESHOLD" "$EXCISED_ROOTS" "$CROWN_ROOT" "$SEGMENTATION" "$MARKER_DIAMETER" "$STEM_RECONSTRUCTION" "$PLOTS" "$OUTPUT_FORMAT" "$OUTPUT" "$TRAIT_FILE"
 params:
   - MASK_THRESHOLD=10.0
@@ -26,7 +26,7 @@ output:
   path:
   include: 
     names:
-      - output.csv
+      - 0/output.csv
 resources:
   time: "03:00:00"
   mem: "5GB"

@@ -59,6 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 import math, random
 
+
 # -- The Point class represents points in n-dimensional space
 class Point:
     # Instance variables
@@ -70,11 +71,15 @@ class Point:
         self.coords = coords
         self.n = len(coords)
         self.reference = reference
+
     # Return a string representation of this Point
     def __repr__(self):
         return str(self.coords)
-    def __getitem__(self,idx):
+
+    def __getitem__(self, idx):
         return self.coords[idx]
+
+
 # -- The Cluster class represents clusters of points in n-dimensional space
 class Cluster:
     # Instance variables
@@ -92,11 +97,14 @@ class Cluster:
             if p.n != self.n: raise Exception("ILLEGAL: MULTISPACE CLUSTER")
         # Figure out what the centroid of this Cluster should be
         self.centroid = self.calculateCentroid()
+
     # Return a string representation of this Cluster
     def __repr__(self):
         return str(self.points)
-    def __getitem__(self,idx):
+
+    def __getitem__(self, idx):
         return self.points[idx]
+
     # Update function for the <strong class="highlight">K-means</strong> algorithm
     # Assigns a new list of Points to this Cluster, returns centroid difference
     def update(self, points):
@@ -104,8 +112,9 @@ class Cluster:
         self.points = points
         self.centroid = self.calculateCentroid()
         return self.getDistance(old_centroid, self.centroid)
+
     # -- Get the Euclidean distance between two Points
-    def getDistance(self,a, b):
+    def getDistance(self, a, b):
         # Forbid measurements between Points in different spaces
         if a.n != b.n: raise Exception("ILLEGAL: NON-COMPARABLE POINTS")
         # Euclidean distance between a and b is sqrt(sum((a[i]-b[i])^2) for all i)
@@ -113,6 +122,7 @@ class Cluster:
         for i in range(a.n):
             ret = ret + pow((a.coords[i] - b.coords[i]), 2)
         return math.sqrt(ret)
+
     # Calculates the centroid Point - the centroid is the sample mean Point
     # (in plain English, the average of all the Points in the Cluster)
     def calculateCentroid(self):
@@ -123,18 +133,22 @@ class Cluster:
             centroid_coords.append(0.0)
             for p in self.points:
                 centroid_coords[i] = centroid_coords[i] + p.coords[i]
-            if len(self.points)>0: centroid_coords[i] = centroid_coords[i] / len(self.points)
-            else: centroid_coords[i] = -1
+            if len(self.points) > 0:
+                centroid_coords[i] = centroid_coords[i] / len(self.points)
+            else:
+                centroid_coords[i] = -1
         # Return a Point object using the average coordinates
         return Point(centroid_coords)
+
+
 # -- Return Clusters of Points formed by <strong class="highlight">K-means</strong> <strong class="highlight">clustering</strong>
 class kMeans:
-    def __init__(self,pts):
-        self.__points=[]
+    def __init__(self, pts):
+        self.__points = []
         for i in pts:
             self.__points.append(Point(i))
-            
-    def kmeans(self,k, cutoff):
+
+    def kmeans(self, k, cutoff):
         # Randomly sample k Points from the points list, build Clusters around them
         initial = random.sample(self.__points, k)
         clusters = []
@@ -166,8 +180,9 @@ class kMeans:
             if biggest_shift < cutoff: break
         # Return the list of Clusters
         return clusters
+
     # -- Get the Euclidean distance between two Points
-    def getDistance(self,a, b):
+    def getDistance(self, a, b):
         # Forbid measurements between Points in different spaces
         if a.n != b.n: raise Exception("ILLEGAL: NON-COMPARABLE POINTS")
         # Euclidean distance between a and b is sqrt(sum((a[i]-b[i])^2) for all i)
@@ -175,9 +190,9 @@ class kMeans:
         for i in range(a.n):
             ret = ret + pow((a.coords[i] - b.coords[i]), 2)
         return math.sqrt(ret)
+
     # -- Create a random Point in n-dimensional space
-    def makeRandomPoint(self,n, lower, upper):
+    def makeRandomPoint(self, n, lower, upper):
         coords = []
         for _ in range(n): coords.append(random.uniform(lower, upper))
         return Point(coords)
-
