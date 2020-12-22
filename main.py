@@ -629,7 +629,7 @@ def main(opt=None):
     rootCrown = int(options[5][1])
     maxExRoot = int(options[4][1])
     io.__init__(options[0][1], ID=ID, plots=bool(int(options[9][1])))
-    tempdir = os.path.join(options[11][1], os.path.basename(options[0][1]).rpartition('.')[0])
+    tempdir = os.path.join(options[11][1], os.path.splitext(options[1][1])[0])
     print(f"Using temp dir {tempdir}")
     init(tempdir, io)
 
