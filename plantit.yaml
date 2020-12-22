@@ -4,7 +4,7 @@ public: True
 clone: True
 branch: plantit
 image: docker://computationalplantscience/dirt
-commands: python /opt/DIRT/main.py "$INPUT" 0 "$MASK_THRESHOLD" "$EXCISED_ROOTS" "$CROWN_ROOT" "$SEGMENTATION" "$MARKER_DIAMETER" "$STEM_RECONSTRUCTION" "$PLOTS" "$OUTPUT_FORMAT" "$OUTPUT" "$TRAIT_FILE"
+commands: python3 /opt/DIRT/main.py "$INPUT" 0 "$MASK_THRESHOLD" "$EXCISED_ROOTS" "$CROWN_ROOT" "$SEGMENTATION" "$MARKER_DIAMETER" "$STEM_RECONSTRUCTION" "$PLOTS" "$OUTPUT_FORMAT" "$OUTPUT" "$TRAIT_FILE"
 params:
   - MASK_THRESHOLD=10.0
   - EXCISED_ROOTS=0
