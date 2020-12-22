@@ -635,7 +635,7 @@ def main(opt=None):
     if int(options[6][1]) == 0:
         io.setHomePath(os.path.join(options[11][1], str(ID)))
         print(os.getcwd())
-        infile = open(os.path.join(io.getHomePath(), 'tmp', f"{options[0][1]}.para.sav"), 'rb')
+        infile = open(os.path.join(io.getHomePath(), 'tmp', f"{options[1][1]}.para.sav"), 'rb')
         allPara = pickle.load(infile)
         infile.close()
         print('Saved parameters loaded')
@@ -643,7 +643,7 @@ def main(opt=None):
 
     elif int(options[6][1]) == 1:
         threadSegmentation(options[11][1], options[1][1], ID, int(options[4][1]), rootCrown, float(options[7][1]) > 0.0)
-        outfile = open(os.path.join(io.getHomePath(), 'tmp', f"{options[0][1]}.para.sav"), 'wb')
+        outfile = open(os.path.join(io.getHomePath(), 'tmp', f"{options[1][1]}.para.sav"), 'wb')
         pickle.dump(allPara, outfile)
         outfile.close()
     else:
