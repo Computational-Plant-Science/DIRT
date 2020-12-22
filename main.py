@@ -102,6 +102,7 @@ from fixImageOrientation import *
 '''
 # standard python imports
 '''
+import glob
 import os
 import pickle
 import csv
@@ -273,8 +274,7 @@ def threadCrown(filepath):
     print(io.getHomePath())
     oldHome = io.getHomePath()
     os.chdir(io.getHomePath())
-    io.setHomePath('./Crown/')
-    f = io.scanDir()
+    f = glob.glob('*.crown.png')
     for (counter, i) in enumerate(f):
         io.setFileName(os.path.basename(i))
         io.setidIdx(imgID)
@@ -493,8 +493,7 @@ def threadCrown(filepath):
     if maxExRoot >= 1:
         rtpSkel = -1
         os.chdir(io.getHomePath())
-        io.setHomePath('./Lateral/')
-        f = io.scanDir()
+        f = glob.glob('*.lateral.png')
         for (counter, i) in enumerate(f):
             print('processing lateral file: ' + i)
 
