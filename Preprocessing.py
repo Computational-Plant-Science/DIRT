@@ -110,7 +110,7 @@ class Preprocessing(object):
         pathold = os.getcwd()
         os.chdir(self.__io.getHomePath())
         self.__io.writeServerFile('dirt_out.csv',
-                                  self.__io.getHomePath() + '/Mask/' + self.__io.getFileName() + '.png,' + str(
+                                  self.__io.getFileName() + '.png,' + str(
                                       self.__io.getID()) + ',0')
         os.chdir(pathold)
         imgLabel = self.calculateLabelHist(imgBinary)
@@ -171,7 +171,7 @@ class Preprocessing(object):
                         pathold = os.getcwd()
                         os.chdir(self.__io.getHomePath())
                         self.__io.writeServerFile('dirt_out.csv',
-                                                  self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
+                                                  self.__io.getFileName() + '_' + str(
                                                       centerPtx) + '_' + str(centerPty) + '.png,' + str(
                                                       self.__io.getID()) + ',0')
                         print('excised root ' + str(i) + 'saved Server')
@@ -191,7 +191,7 @@ class Preprocessing(object):
                         centerPtx) + '_' + str(centerPty) + '.lateral.png', imgExRoot)
                     print('excised root saved')
                     self.__io.writeServerFile('dirt_out.csv',
-                                              self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
+                                              self.__io.getFileName() + '_' + str(
                                                   centerPtx) + '_' + str(centerPty) + '.png,' + str(
                                                   self.__io.getID()) + ',0')
                     print('excised root saved Server')
@@ -210,7 +210,7 @@ class Preprocessing(object):
                         centerPtx) + '_' + str(centerPty) + '.lateral.png', imgExRoot)
                     print('excised root saved')
                     self.__io.writeServerFile('dirt_out.csv',
-                                              self.__io.getHomePath() + '/Lateral/' + self.__io.getFileName() + '_' + str(
+                                              self.__io.getFileName() + '_' + str(
                                                   centerPtx) + '_' + str(centerPty) + '.png,' + str(
                                                   self.__io.getID()) + ',0')
                     print('excised root saved Server')
@@ -244,7 +244,7 @@ class Preprocessing(object):
                 pathold = os.getcwd()
                 os.chdir(self.__io.getHomePath())
                 self.__io.writeServerFile('dirt_out.csv',
-                                          self.__io.getHomePath() + '/Crown/' + self.__io.getFileName() + '.png,' + str(
+                                          self.__io.getFileName() + '.png,' + str(
                                               self.__io.getID()) + ',0')
                 os.chdir(pathold)
             except:
@@ -651,7 +651,7 @@ class Preprocessing(object):
                 pass
 
             self.__io.writeServerFile('dirt_out.csv',
-                                      self.__io.getHomePath() + '/Mask/' + self.__io.getFileName() + 'Tag.png,' + str(
+                                      self.__io.getFileName() + 'Tag.png,' + str(
                                           self.__io.getID()) + ',0')
 
 

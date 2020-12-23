@@ -128,26 +128,14 @@ traitDict = OrderedDict()
 
 def init(fpath, io):
     oldpath = os.getcwd()
-    io.setHomePath(fpath)
-    if not os.path.exists(fpath):
-        os.mkdir(fpath)
-    os.chdir(fpath)
-    print(os.getcwd())
+    # io.setHomePath(fpath)
+    # if not os.path.exists(fpath):
+    #     os.mkdir(fpath)
+    # os.chdir(fpath)
+    # print(os.getcwd())
     io.setServerPath(os.getcwd())
-    if not os.path.exists('tmp'):
-        os.mkdir('tmp')
-    if not os.path.exists('Mask'):
-        os.mkdir('Mask')
-    if not os.path.exists(os.path.join('Lateral', 'Plots')):
-        os.makedirs(os.path.join('Lateral', 'Plots'))
-    if not os.path.exists(os.path.join('Lateral', 'Result')):
-        os.makedirs(os.path.join('Lateral', 'Result'))
-    if not os.path.exists(os.path.join('Crown', 'Plots')):
-        os.makedirs(os.path.join('Crown', 'Plots'))
-    if not os.path.exists(os.path.join('Crown', 'Result')):
-        os.makedirs(os.path.join('Crown', 'Result'))
-    if not os.path.exists(os.path.join('Crown', 'Skeleton')):
-        os.makedirs(os.path.join('Crown', 'Skeleton'))
+    # if not os.path.exists('tmp'):
+    #     os.mkdir('tmp')
 
     os.chdir(oldpath)
     readTraits(options[12][1])
@@ -636,7 +624,7 @@ def main(opt=None):
     if int(options[6][1]) == 0:
         io.setHomePath(os.path.join(options[11][1], str(ID)))
         print(os.getcwd())
-        infile = open(os.path.join(io.getHomePath(), 'tmp', f"{options[1][1]}.para.sav"), 'rb')
+        infile = open(os.path.join(io.getHomePath(), f"{options[1][1]}.para.sav"), 'rb')
         allPara = pickle.load(infile)
         infile.close()
         print('Saved parameters loaded')
@@ -644,7 +632,7 @@ def main(opt=None):
 
     elif int(options[6][1]) == 1:
         threadSegmentation(options[11][1], options[1][1], ID, int(options[4][1]), rootCrown, float(options[7][1]) > 0.0)
-        outfile = open(os.path.join(io.getHomePath(), 'tmp', f"{options[1][1]}.para.sav"), 'wb')
+        outfile = open(os.path.join(io.getHomePath(), f"{options[1][1]}.para.sav"), 'wb')
         pickle.dump(allPara, outfile)
         outfile.close()
     else:
