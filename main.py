@@ -622,7 +622,7 @@ def main(opt=None):
 
     # Run analysis
     if int(options[6][1]) == 0:
-        io.setHomePath(os.path.join(options[11][1], str(ID)))
+        #io.setHomePath(os.path.join(options[11][1], str(ID)))
         print(os.getcwd())
         infile = open(os.path.join(io.getHomePath(), f"{options[1][1]}.para.sav"), 'rb')
         allPara = pickle.load(infile)
