@@ -9,7 +9,7 @@ COPY . /opt/DIRT
 
 RUN pacman -S --noconfirm gcc git python-pip && \
     cd /opt/DIRT && \
-    sed -i 's#/usr/local/bin/zbarimg#/usr/bin/zbarimg#' /opt/DIRT/DirtOcr/__init__.py && \
+    sed -i 's#/usr/local/bin/zbarimg#/usr/bin/zbarimg#' /opt/DIRT/ocr.py && \
     pip install -r /opt/DIRT/requirements.txt
 
 ENV LC_ALL=C

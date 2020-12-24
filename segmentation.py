@@ -1,4 +1,4 @@
-'''
+"""
 Segmentation.py
 
 The Segmentation module for DIRT. We perform connected component labeling and construct the medial axis graph here.
@@ -49,11 +49,15 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-'''
+"""
+import os
+import time
 
-'''
-# external library imports
-'''
+from options import DIRTOptions
+from orientation import fix_orientation
+from preprocessing import Preprocessing
+
+import imageio
 import numpy as np
 from scipy import ndimage
 import graph_tool.topology as gt
@@ -61,25 +65,11 @@ import graph_tool.util as gu
 from graph_tool import Graph
 import mahotas as m
 
-'''
-# standard python import
-'''
-import time
-
 
 class Segmentation(object):
-    '''
-    classdocs
-    '''
 
-    def __init__(self, img, io=0, tips=[], ):
-        '''
-        Constructor
-        '''
-        self.__idIdx = io.getCurrentID()
+    def __init__(self, img, tips=[]):
         self.__img = img
-        self.__io = io
-        self.__id = io.getID()
         self.__height, self.__width = np.shape(self.__img)
         self.__tips = tips
         self.__fail = False
@@ -92,59 +82,6 @@ class Segmentation(object):
         BAD HACK. DO IT CLEAN IN THE REFACTORED VERSION
         '''
         self.__tips = tips
-
-    def smooth(self, x, window_len=11, window='hanning'):
-        """smooth the data using a window with requested size.
-        
-        This method is based on the convolution of a scaled window with the signal.
-        The signal is prepared by introducing reflected copies of the signal 
-        (with the window size) in both ends so that transient parts are minimized
-        in the begining and end part of the output signal.
-        
-        input:
-            x: the input signal 
-            window_len: the dimension of the smoothing window; should be an odd integer
-            window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-                flat window will produce a moving average smoothing.
-    
-        output:
-            the smoothed signal
-            
-        example:
-    
-        t=linspace(-2,2,0.1)
-        x=sin(t)+randn(len(t))*0.1
-        y=smooth(x)
-        
-        see also: 
-        
-        numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
-        scipy.signal.lfilter
-     
-        TODO: the window parameter could be the window itself if an array instead of a string
-        NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
-        """
-
-        if x.ndim != 1:
-            raise (ValueError, "smooth only accepts 1 dimension arrays.")
-
-        if x.size < window_len:
-            raise (ValueError, "Input vector needs to be bigger than window size.")
-
-        if window_len < 3:
-            return x
-
-        if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-            raise (ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
-
-        s = np.r_[x[window_len - 1:0:-1], x, x[-1:-window_len:-1]]
-        if window == 'flat':  # moving average
-            w = np.ones(window_len, 'd')
-        else:
-            w = eval('np.' + window + '(window_len)')
-
-        y = np.convolve(w / w.sum(), s, mode='valid')
-        return y
 
     def label(self, onlyOne=True):
 
@@ -179,46 +116,6 @@ class Segmentation(object):
     def labelAll(self):
         labeled, nr_objects = ndimage.label(self.__img)
         return labeled, nr_objects
-
-    def findCircle(self, hist, labled):
-        compsX = []
-        compsY = []
-        for i in range(len(hist) + 1):
-            compsX.append([])
-            compsY.append([])
-        h, w = np.shape(labled)
-        for i in range(w):
-            for j in range(h):
-                compsX[labled[j][i]].append(j)
-                compsY[labled[j][i]].append(i)
-        ratio = []
-        for i in range(len(compsX)):
-            xMin = np.min(compsX[i])
-            xMax = np.max(compsX[i])
-            yMin = np.min(compsY[i])
-            yMax = np.max(compsY[i])
-            if yMax - yMin > w / 200:
-                if yMax - yMin < w / 10:
-                    if ratio < 0.2:
-                        ratio.append((float(xMax) - float(xMin)) / (float(yMax) - float(yMin)))
-                else:
-                    ratio.append(-1)
-            else:
-                ratio.append(-1)
-
-        circleRatio = 1
-        circleIdx = 0
-        for i in range(len(ratio)):
-            if ratio[i] >= 0:
-                if np.abs(1 - ratio[i]) < circleRatio:
-                    circleRatio = np.abs(1 - ratio[i])
-                    circleIdx = i
-        xMin = np.min(compsX[circleIdx])
-        xMax = np.max(compsX[circleIdx])
-        yMin = np.min(compsY[circleIdx])
-        yMax = np.max(compsY[circleIdx])
-
-        return circleIdx, circleRatio, float(xMax) - float(xMin), float(yMax) - float(yMin)
 
     def findThickestPath(self, skelImg, skelDia, xScale, yScale):
         print('create skeleton graph')
@@ -440,161 +337,6 @@ class Segmentation(object):
         if u.num_vertices() != G.num_vertices(): self.__fail = float((G.num_vertices() - u.num_vertices())) / float(
             G.num_vertices())
         return u, u.num_vertices()
-
-    def makeGraph(self, img, dia, xScale, yScale):
-        print('Building Graph Data Structure')
-        start = time.time()
-        G = Graph(directed=False)
-        vprop = G.new_vertex_property('object')
-        eprop = G.new_edge_property('object')
-        epropW = G.new_edge_property("int32_t")
-        avgScale = (xScale + yScale) / 2
-
-        test = np.where(img == True)
-        ss = np.shape(test)
-        cccc = 0
-        percentOld = 0.0
-        print(str(np.round(percentOld, 1)) + '%')
-        for (i, j) in zip(test[1], test[0]):
-            cccc += 1
-            percent = (float(cccc) / float(ss[1])) * 100
-            if percentOld + 10 < percent:
-                print(str(np.round(percent, 1)) + '%')
-                percentOld = percent
-            nodeNumber1 = (float(i) * yScale, float(j) * xScale)
-            if gu.find_vertex(G, vprop, {'imgIdx': (j, i), 'coord': nodeNumber1, 'nrOfPaths': 0,
-                                         'diameter': float(dia[j][i]) * avgScale}):
-                v1 = gu.find_vertex(G, vprop, {'imgIdx': (j, i), 'coord': nodeNumber1, 'nrOfPaths': 0,
-                                               'diameter': float(dia[j][i]) * avgScale})[0]
-            else:
-                v1 = G.add_vertex()
-                vprop[G.vertex(v1)] = {'imgIdx': (j, i), 'coord': nodeNumber1, 'nrOfPaths': 0,
-                                       'diameter': float(dia[j][i]) * avgScale}
-            try:
-
-                if img[j, i + 1] == True:
-                    nodeNumber2 = (float(i + 1) * yScale, float(j) * xScale)
-                    if gu.find_vertex(G, vprop, {'imgIdx': (j, i + 1), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                 'diameter': float(dia[j][i + 1]) * avgScale}):
-                        v2 = gu.find_vertex(G, vprop, {'imgIdx': (j, i + 1), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                       'diameter': float(dia[j][i + 1]) * avgScale})[0]
-                        if gu.find_edge(G, eprop, {'coord1': vprop[v2]['coord'], 'coord2': vprop[v1]['coord'],
-                                                   'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                                   'RTP': False}):
-                            pass
-                        else:
-                            e = G.add_edge(v1, v2)
-                            epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                            eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                        'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                        'RTP': False}
-                    else:
-                        v2 = G.add_vertex()
-                        vprop[G.vertex(v2)] = {'imgIdx': (j, i + 1), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                               'diameter': float(dia[j][i + 1]) * avgScale}
-                        e = G.add_edge(v1, v2)
-                        epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                        eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                    'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4, 'RTP': False}
-            except:
-                pass
-            try:
-                if img[j, i - 1] == True:
-                    nodeNumber2 = (float(i - 1) * yScale, float(j) * xScale)
-                    if gu.find_vertex(G, vprop, {'imgIdx': (j, i - 1), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                 'diameter': float(dia[j][i - 1]) * avgScale}):
-                        v2 = gu.find_vertex(G, vprop, {'imgIdx': (j, i - 1), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                       'diameter': float(dia[j][i - 1]) * avgScale})[0]
-                        if gu.find_edge(G, eprop, {'coord1': vprop[v2]['coord'], 'coord2': vprop[v1]['coord'],
-                                                   'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                                   'RTP': False}):
-                            pass
-                        else:
-                            e = G.add_edge(v1, v2)
-                            epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                            eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                        'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                        'RTP': False}
-                    else:
-                        v2 = G.add_vertex()
-                        vprop[G.vertex(v2)] = {'imgIdx': (j, i - 1), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                               'diameter': float(dia[j][i - 1]) * avgScale}
-                        e = G.add_edge(v1, v2)
-                        epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                        eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                    'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4, 'RTP': False}
-            except:
-                pass
-            try:
-                if img[j + 1, i] == True:
-                    nodeNumber2 = (float(i) * yScale, float(j + 1) * xScale)
-                    if gu.find_vertex(G, vprop, {'imgIdx': (j + 1, i), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                 'diameter': float(dia[j + 1][i]) * avgScale}):
-                        v2 = gu.find_vertex(G, vprop, {'imgIdx': (j + 1, i), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                       'diameter': float(dia[j + 1][i]) * avgScale})[0]
-                        if gu.find_edge(G, eprop, {'coord1': vprop[v2]['coord'], 'coord2': vprop[v1]['coord'],
-                                                   'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                                   'RTP': False}):
-                            pass
-                        else:
-                            e = G.add_edge(v1, v2)
-                            epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                            eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                        'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                        'RTP': False}
-                    else:
-                        v2 = G.add_vertex()
-                        vprop[G.vertex(v2)] = {'imgIdx': (j + 1, i), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                               'diameter': float(dia[j + 1][i]) * avgScale}
-                        e = G.add_edge(v1, v2)
-                        epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                        eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                    'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4, 'RTP': False}
-            except:
-                pass
-            try:
-                if img[j - 1, i] == True:
-                    nodeNumber2 = (float(i) * yScale, float(j - 1) * xScale)
-                    if gu.find_vertex(G, vprop, {'imgIdx': (j - 1, i), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                 'diameter': float(dia[j - 1][i]) * avgScale}):
-                        v2 = gu.find_vertex(G, vprop, {'imgIdx': (j - 1, i), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                                       'diameter': float(dia[j - 1][i]) * avgScale})[0]
-                        if gu.find_edge(G, eprop, {'coord1': vprop[v2]['coord'], 'coord2': vprop[v1]['coord'],
-                                                   'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                                   'RTP': False}):
-                            pass
-                        else:
-                            e = G.add_edge(v1, v2)
-                            epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                            eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                        'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4,
-                                        'RTP': False}
-                    else:
-                        v2 = G.add_vertex()
-                        vprop[G.vertex(v2)] = {'imgIdx': (j - 1, i), 'coord': nodeNumber2, 'nrOfPaths': 0,
-                                               'diameter': float(dia[j - 1][i]) * avgScale}
-                        e = G.add_edge(v1, v2)
-                        epropW[e] = (((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) / avgScale) ** 4
-                        eprop[e] = {'coord1': vprop[v1]['coord'], 'coord2': vprop[v2]['coord'],
-                                    'weight': ((vprop[v1]['diameter'] + vprop[v2]['diameter']) / 2) ** 4, 'RTP': False}
-            except:
-                pass
-        #
-        print('100.0%')
-        print('selecting largest connected component')
-        G.edge_properties["ep"] = eprop
-        G.edge_properties["w"] = epropW
-        G.vertex_properties["vp"] = vprop
-        l = gt.label_largest_component(G)
-        print(l.a)
-        u = gt.GraphView(G, vfilt=l)
-        print('# vertices')
-        print(u.num_vertices())
-        print(G.num_vertices())
-        print('# edges')
-        print(u.num_edges())
-        print('building graph finished in: ' + str(time.time() - start) + 's')
-        return u
 
     def findRootVertex(self, G):
         print('finding root vertex X')

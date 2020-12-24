@@ -23,6 +23,7 @@ input:
     - jpg
     - png
     - tif
+    - tiff
 output:
   path:
   include: 

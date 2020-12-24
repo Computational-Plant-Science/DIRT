@@ -1,4 +1,4 @@
-'''
+"""
 Masking.py
 
 The MAsking module for DIRT. This class contains all functions to compute the binary masked as described in the paper.
@@ -49,25 +49,16 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-'''
+"""
 
-'''
- external library imports
-'''
 import mahotas as m
 import numpy as np
 import scipy.ndimage
 
 
 class Masking(object):
-    '''
-    classdocs
-    '''
 
     def __init__(self, scale=1.0):
-        '''
-        Constructor
-        '''
         self.__scale = scale
 
     def threshold_adaptive(self, image, block_size, method='gaussian', offset=0,
@@ -97,7 +88,7 @@ class Masking(object):
 
         return image > (thresh_image - offset)
 
-    def calculateMask(self, img):
+    def mask(self, img):
         print('Masking input')
         if len(np.unique(img)) <= 2:
             print('Binary input detected, no thresholding performed')

@@ -6,3 +6,4 @@ scipy==1.5.2
 scikit-image==0.18.0
 certifi==2020.12.5
 imageio==2.9.0
+click==7.1.2

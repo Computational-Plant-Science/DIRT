@@ -1,4 +1,4 @@
-'''
+"""
 Analysis.py
 
 The analysis module for DIRT. Most of the traits are computed here.
@@ -50,44 +50,29 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
+"""
 
-'''
-# internal library imports
-'''
 import kmeans as km
 import ransac
 
-'''
-# external library imports
-'''
 import numpy as np
 import warnings
 import imageio
+
+from options import DIRTOptions
 
 warnings.simplefilter('ignore', np.RankWarning)  # suppress the warning
 import scipy.stats
 import scipy.misc
 import scipy.interpolate
-from graph_tool.all import *
-import graph_tool.topology as gt
 
 
 class Analysis(object):
-    '''
-    classdocs
-    '''
-
-    def __init__(self, io, scale):
-        '''
-        Constructor
-        '''
-        self.__io = io
-        self.__id = io.getID()
-        self.__currentIdx = io.getCurrentID()
+    def __init__(self, options: DIRTOptions, scale):
+        self.__options = options
         self.__scale = scale
 
-    def findHistoPeaks(self, ang):
+    def find_histo_peaks(self, ang):
         try:
             pdf, _ = np.histogram(ang, bins=9, range=(0, 90))
             maximum = []
@@ -176,7 +161,7 @@ class Analysis(object):
         y = np.convolve(w / w.sum(), s, mode='valid')
         return y
 
-    def filterPathDiameters(self, path, G, scale):
+    def filter_path_diameters(self, path, G, scale):
         # remove diameters around branching points in range of the branching point diameter
         vprop = G.vertex_properties["vp"]
         for i in range(len(path)):
@@ -194,13 +179,13 @@ class Analysis(object):
                 vprop[path[i]]['diameter'] = 0
         return G
 
-    def filterPath(self, path, G):
+    def filter_path(self, path, G):
         # remove diameters around branching points in range of the branching point diameter
         delDia = G.node[path[0]]['diameter']
 
         return path[3::]
 
-    def getLateralLength(self, pathList, thickestPath, G, counter=None):
+    def get_lateral_length(self, pathList, thickestPath, G, counter=None):
         vprop = G.vertex_properties["vp"]
         lengthArr = []
         x = []
@@ -217,18 +202,17 @@ class Analysis(object):
 
         print('avg. Length: ' + str(avgLength))
         try:
-            self.__io.saveArray(lengthArr, self.__io.getFileName() + '_LengthHist')
-
+            np.savetxt(f"{self.__options.input_stem}.length.histo.txt", lengthArr, delimiter=',')
             f2 = scipy.interpolate.interp1d(x, lengthArr, kind='cubic')
-            self.__io.saveArray(x, self.__io.getFileName() + '_LengthX')
-            self.__io.saveArray(f2(x), self.__io.getFileName() + '_LengthY')
+            np.savetxt(f"{self.__options.input_stem}.length.x.txt", x, delimiter=',')
+            np.savetxt(f"{self.__options.input_stem}.length.y.txt", f2(x), delimiter=',')
 
         except:
             pass
         print("Avg.Length Scale Nodalroot" + str(self.__scale))
         return avgLength * self.__scale
 
-    def getLateralLengthRTP(self, RTP, img, counter=None):
+    def get_lateral_length_rtp(self, RTP, img, counter=None):
         lengthArr = []
         imgDebug = img.astype(np.uint8)
         for i in RTP:
@@ -244,13 +228,11 @@ class Analysis(object):
         avgLength = np.average(lengthArr)
         print('avg. Length: ' + str(avgLength))
 
-        self.__io.saveArray(lengthArr,
-                            self.__io.getFileName() + '_LateralLengthHisto')
-        self.__io.saveArray(range(0, len(lengthArr)),
-                            self.__io.getFileName() + '_LateralLengthX')
-        self.__io.saveArray(lengthArr, self.__io.getFileName() + '_LateralLengthY')
+        np.savetxt(f"{self.__options.input_stem}.lateral.length.histo.txt", lengthArr, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.lateral.length.x.txt", range(0, len(lengthArr)), delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.lateral.length.y.txt", lengthArr, delimiter=',')
 
-    def getSymmetry(self, rtps, G):
+    def get_symmetry(self, rtps, G):
         vprop = G.vertex_properties["vp"]
         # calculate bounding box
         xMax = 0
@@ -287,7 +269,7 @@ class Analysis(object):
 
         return vecSym
 
-    def getLateralAngles(self, thickestPath, lat, corrBranchpts, G, counter=None):
+    def get_lateral_angles(self, thickestPath, lat, corrBranchpts, G, counter=None):
         # calculates the angle between the hypocotyle and all rtps
         angles = []
         tangents = self.filterRTPTangent(thickestPath, lat, corrBranchpts)
@@ -295,7 +277,7 @@ class Analysis(object):
             ang = self.getAngleBetweenPaths(tangents[i], lat[i], G)
             angles.append(ang)
         try:
-            self.__io.saveArray(angles, self.__io.getFileName() + '_AngleHisto')
+            np.savetxt(f"{self.__options.input_stem}.angle.histo.txt", angles, delimiter=',')
             minAngle = np.min(angles)
             maxAngle = np.max(angles)
             angRange = maxAngle - minAngle
@@ -308,7 +290,7 @@ class Analysis(object):
             avgAngle = -1
         return angRange, avgAngle, minAngle, maxAngle, angles
 
-    def getBranchingfrequencyAlongSinglePath(self, rtps, path):
+    def get_branching_frequency_along_single_path(self, rtps, path):
         bp = []
         for i in rtps:
             if i[0] != path[0]:
@@ -338,16 +320,16 @@ class Analysis(object):
 
         besty = np.polyval(coeffs, x)
 
-        self.__io.saveArray(x, self.__io.getFileName() + '_DiameterX')
-        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterY')
+        np.savetxt(f"{self.__options.input_stem}.diameter.x.txt", x, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.diameter.y.txt", y, delimiter=',')
 
         avgDiameter = np.average(y)
-        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterHisto')
+        np.savetxt(f"{self.__options.input_stem}.diameter.histo.txt", y, delimiter=',')
         return avgDiameter, coeffs[0]
 
     def getDiameterQuantilesAlongSinglePath(self, path, G, counter=None):
 
-        G = self.filterPathDiameters(path, G, self.__scale)
+        G = self.filter_path_diameters(path, G, self.__scale)
         x = []
         y = []
         length = 0
@@ -361,8 +343,8 @@ class Analysis(object):
 
         besty = np.polyval(coeffs, x)
 
-        self.__io.saveArray(x, self.__io.getFileName() + '_DiameterX')
-        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterY')
+        np.savetxt(f"{self.__options.input_stem}.diameter.x.txt", x, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.diameter.y.txt", y, delimiter=',')
 
         l = len(y) - 1
         l25 = int(l * 0.25)
@@ -375,7 +357,7 @@ class Analysis(object):
         d75 = np.average(y[l50:l75])
         d90 = np.average(y[l90:])
 
-        self.__io.saveArray(y, self.__io.getFileName() + '_DiameterHistoTP')
+        np.savetxt(f"{self.__options.input_stem}.diameter.histo.tp.txt", y, delimiter=',')
 
         return d25, d50, d75, d90
 
@@ -462,8 +444,8 @@ class Analysis(object):
                 tmp.append(yy[i + j])
                 tmp.append(yy[i - j])
             ysmooth[i] = np.median(tmp)
-        self.__io.saveArray(xxNorm, self.__io.getFileName() + '_HeightWidthX')
-        self.__io.saveArray(ysmooth, self.__io.getFileName() + '_HeightWidthY')
+        np.savetxt(f"{self.__options.input_stem}.height.width.x.txt", xxNorm, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.height.width.y.txt", ysmooth, delimiter=',')
 
         # compute the width parameters of the root
         medianWidth = np.median(ysmooth)
@@ -493,8 +475,8 @@ class Analysis(object):
         # Dslope=self.filterCDFTAngentSlope(xxNorm,ysmoothCS, range(len(ysmoothCS)),200)
 
         # save the data for plotting
-        self.__io.saveArray(xxNorm, self.__io.getFileName() + '_HeightWidthCSX')
-        self.__io.saveArray(ysmoothCS, self.__io.getFileName() + '_HeightWidthCSY')
+        np.savetxt(f"{self.__options.input_stem}.height.width.csx.txt", xxNorm, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.height.width.csy.txt", ysmoothCS, delimiter=',')
         # self.__io.saveArray(Dslope,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSX')
         # self.__io.saveArray(ysmoothCS,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_HeightWidthDSY')
 
@@ -527,8 +509,7 @@ class Analysis(object):
                 angAtDist = self.getAngleToXAx(G, lat[i][:pxDist])
                 angelsAtDist.append(angAtDist)
 
-        self.__io.saveArray(angelsAtDist,
-                            self.__io.getFileName() + '_AngleHistoAtDist')
+        np.savetxt(f"{self.__options.input_stem}.angle.histo.at.dist.txt", angelsAtDist, delimiter=',')
         return np.mean(angelsAtDist)
 
     def calculateAngleQuantiles(self, thickestPath, lat, corrBranchpts, G, counter=None):
@@ -554,10 +535,10 @@ class Analysis(object):
             angles75.append(ang75)
             angles90.append(ang90)
 
-        self.__io.saveArray(angles25, self.__io.getFileName() + '_AngleHisto25')
-        self.__io.saveArray(angles50, self.__io.getFileName() + '_AngleHisto50')
-        self.__io.saveArray(angles75, self.__io.getFileName() + '_AngleHisto75')
-        self.__io.saveArray(angles90, self.__io.getFileName() + '_AngleHisto90')
+        np.savetxt(f"{self.__options.input_stem}.angle.histo.25.txt", angles25, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.angle.histo.50.txt", angles50, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.angle.histo.75.txt", angles75, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.angle.histo.90.txt", angles90, delimiter=',')
 
         return angles25, angles50, angles75, angles90
 
@@ -569,7 +550,7 @@ class Analysis(object):
         for i in range(len(lat)):
             ang = self.getAngleToXAx(G, lat[i])
             angles.append(ang)
-        self.__io.saveArray(angles, self.__io.getFileName() + '_AngleHistoN')
+        np.savetxt(f"{self.__options.input_stem}.angle.histo.n.txt", angles, delimiter=',')
         #        f=p.figure()
         #        ax = f.add_subplot(111)
         #        p.hist(angles,bins=9, range=(0, 90))
@@ -688,12 +669,8 @@ class Analysis(object):
                 cX[nc].append(i[0])
                 cY[nc].append(i[1])
         for nc in range(nrOfClusters):
-            self.__io.saveArray(cX[nc],
-                                self.__io.getFileName() + '_PathsDiaAx_' + str(
-                                    nrOfClusters) + '_' + str(nc))
-            self.__io.saveArray(cY[nc],
-                                self.__io.getFileName() + '_PathsDiaAy_' + str(
-                                    nrOfClusters) + '_' + str(nc))
+            np.savetxt(f"{self.__options.input_stem}.paths.dia.ax.{nrOfClusters}.{nc}.txt", cX[nc], delimiter=',')
+            np.savetxt(f"{self.__options.input_stem}.paths.dia.ay.{nrOfClusters}.{nc}.txt", cY[nc], delimiter=',')
 
         if nrOfClusters == 2:
             if cY[0][0] > cY[1][0]:
@@ -729,7 +706,7 @@ class Analysis(object):
             try:
                 X, Y = ransac.ransacFit(X, Y)
             except:
-                print("ransac fitting failed. Using simple linear fitting")
+                print("RANSAC fitting failed, using simple linear fitting")
         try:
             print('**** Polyfit Input *****')
             print(X)
@@ -769,8 +746,8 @@ class Analysis(object):
             if vprop[i]['nrOfPaths'] <= fiftyPercentRtp:
                 fiftyPercentDrop = vprop[i]['coord'][1]
 
-        self.__io.saveArray(nrOfP, self.__io.getFileName() + '_RTPDepthX')
-        self.__io.saveArray(depth, self.__io.getFileName() + '_RTPDepthY')
+        np.savetxt(f"{self.__options.input_stem}.rtp.depth.x.txt", nrOfP, delimiter=',')
+        np.savetxt(f"{self.__options.input_stem}.rtp.depth.y.txt", depth, delimiter=',')
 
         return fiftyPercentDrop
 

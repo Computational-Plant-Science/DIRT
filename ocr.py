@@ -1,8 +1,8 @@
-'''
+"""
 Created on Feb 12, 2013
 
 @author: koalaspirit
-'''
+"""
 import PIL as pil
 import numpy as np
 import subprocess
@@ -12,22 +12,25 @@ import imageio
 
 
 def image_to_scratch(im, scratch_image_name):
-	"""Saves image in memory to scratch file.  .bmp format will be read correctly by Tesseract"""
-	im.save(scratch_image_name, dpi=(300,300))
+    """Saves image in memory to scratch file.  .bmp format will be read correctly by Tesseract"""
+    im.save(scratch_image_name, dpi=(300, 300))
 
-def	retrieve_text(scratch_text_name_root):
-	inf = open(scratch_text_name_root + '.txt')
-	text = inf.read()
-	inf.close()
-	return text
+
+def retrieve_text(scratch_text_name_root):
+    inf = open(scratch_text_name_root + '.txt')
+    text = inf.read()
+    inf.close()
+    return text
+
 
 def perform_cleanup(scratch_image_name, scratch_text_name_root):
-	"""Clean up temporary files from disk"""
-	for name in (scratch_image_name, scratch_text_name_root + '.txt', "tesseract.log"):
-		try:
-			os.remove(name)
-		except OSError:
-			pass
+    """Clean up temporary files from disk"""
+    for name in (scratch_image_name, scratch_text_name_root + '.txt', "tesseract.log"):
+        try:
+            os.remove(name)
+        except OSError:
+            pass
+
 
 tesseract_exe_name = '/opt/local/bin/tesseract'  # Name of executable to be called at command line
 scratch_image_name = "temp.bmp"  # This file must be .bmp or other Tesseract-compatible format
@@ -68,19 +71,22 @@ def image_to_string(im, cleanup=cleanup_scratch_flag):
             perform_cleanup(scratch_image_name, scratch_text_name_root)
     return text
 
+
 class Tesser_General_Exception(Exception):
-	pass
+    pass
+
 
 class Tesser_Invalid_Filetype(Tesser_General_Exception):
-	pass
+    pass
 
-def check_for_errors(logfile = "tesseract.log"):
-	inf = open(logfile)
-	text = inf.read()
-	inf.close()
-	# All error conditions result in "Error" somewhere in logfile
-	if text.find("Error") != -1:
-		raise(Tesser_General_Exception, text)
+
+def check_for_errors(logfile="tesseract.log"):
+    inf = open(logfile)
+    text = inf.read()
+    inf.close()
+    # All error conditions result in "Error" somewhere in logfile
+    if text.find("Error") != -1:
+        raise (Tesser_General_Exception, text)
 
 
 def image_file_to_string(filename, cleanup=cleanup_scratch_flag, graceful_errors=True):
