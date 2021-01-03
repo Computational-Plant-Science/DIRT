@@ -40,18 +40,12 @@ docker run -it -v $PWD:/opt/dev -w /opt/dev computationalplantscience/dirt pytes
 At its simplest, DIRT can be invoked with:
 
 ```bash
-dirt.py <image file>
+python dirt.py <image file>
 ```
 
 For instance, `dirt.py root1.png` or `dirt.py root2.jpg`. Supported filetypes are JPEG, PNG, and TIFF.
 
-Other command line arguments include:
-
-- `--output_directory`: directory to write output files to
-- `--excised_roots`: number of root segments discontinuous with the root crown (should be placed to the immediate right of the crown)
-- `--marker_diameter`: 
-- `--stem_reconstruction`: whether to correct crown root segmentation for stem regions
-- `--plot`: whether to store plotting data
+You can also specify an `--output_directory` to write files to.
 
 Note that it is not possible to analyze only an excised root when a root crown is in the image. However, it is possible to analyze compute images containing only excised roots.
 
