@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from dirt import cli
 
 test_dir = Path(__file__).parent
-test_files = [
+image_files = [
     'cassava1.jpg',
     'cassava2.jpg',
     'hemp1.jpg',
@@ -19,11 +19,9 @@ test_files = [
 ]
 
 
-@pytest.mark.parametrize("test_file", test_files)
-def test_cli(test_file):
-    runner = CliRunner()
-    # Path(join(test_dir, 'output')).mkdir(parents=True, exist_ok=True)
-    result = runner.invoke(
+@pytest.mark.parametrize("test_image", image_files)
+def test_cli(test_image):
+    result = CliRunner().invoke(
         cli,
-        [join(test_dir, 'data', test_file), '--output_directory', join(test_dir, 'output')])
+        [join(test_dir, 'data', test_image), '--output_directory', join(test_dir, 'output')])
     assert result.exit_code == 0

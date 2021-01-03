@@ -59,17 +59,9 @@ class DIRTOptions:
             self,
             input_file,
             output_directory: str = '',
-            excised_roots: int = 0,
-            marker_diameter: float = 25.4,
-            crown_root: bool = False,
-            stem_reconstruction: bool = False,
-            plot: bool = False):
+            marker_diameter: float = 25.4):
         self.input_file = input_file
         self.input_name = Path(input_file).name
         self.input_stem = Path(input_file).stem
         self.output_directory = output_directory
-        self.excised_roots = excised_roots
         self.marker_diameter = marker_diameter
-        self.crown_root = crown_root
-        self.stem_reconstruction = stem_reconstruction
-        self.plot = plot

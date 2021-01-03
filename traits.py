@@ -171,7 +171,6 @@ def angle_between_paths(graph: Graph, path1: List[VertexBase], path2: List[Verte
 
 
 def lateral_angles(
-        options: DIRTOptions,
         graph: Graph,
         path: List[VertexBase],
         lat,
@@ -703,8 +702,6 @@ def traits(options: DIRTOptions, image: np.ndarray, results: DIRTResults) -> DIR
     # medial axis
     start = time.time()
     med_axis, med_axis_diameter = medial_axis_skeleton(image)
-    # current = DIRTResults(stem_diameter=med_axis_diameter)
-    # results = {**results, **current}
     imageio.imwrite(f"{output_prefix}.medial.axis.png", img_as_uint(med_axis))
     print(f"Medial axis computed in {ceil(time.time() - start)} seconds")
 
@@ -743,6 +740,7 @@ def traits(options: DIRTOptions, image: np.ndarray, results: DIRTResults) -> DIR
     branchRad, nrPaths = hypocotol_cluster(skeleton, thickest_path)
     print(f"Hypocotol computed in {ceil(time.time() - start)} seconds")
 
+    # diameter radii
     start = time.time()
     c1x, c1y, c2x, c2y = diameter_radii(nrPaths, branchRad, 2)
     print(f"2 k-means clusters computed in {ceil(time.time() - start)} seconds")
@@ -759,7 +757,6 @@ def traits(options: DIRTOptions, image: np.ndarray, results: DIRTResults) -> DIR
         hypocotol_diameter=round(float(hypocotyl_diameter), 3),
         taproot_diameter=round(float(taproot_diameter), 3))
     results = {**results, **current}
-    imageio.imwrite(f"{output_prefix}.seg2.png", overlay)
     print(f"Root classes computed in {ceil(time.time() - start)} seconds")
 
     # lateral lengths
@@ -810,7 +807,6 @@ def traits(options: DIRTOptions, image: np.ndarray, results: DIRTResults) -> DIR
     # Soil tissue angle
     start = time.time()
     sta_range, sta_median, sta_min, sta_max, sta_angles = lateral_angles(
-        options,
         graph,
         thickest_path,
         laterals,

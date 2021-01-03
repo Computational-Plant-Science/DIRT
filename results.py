@@ -3,7 +3,7 @@ from typing import TypedDict
 
 class DIRTResults(TypedDict, total=False):
     image_name: str
-    duration: float
+    seconds: int
     tag: str
     marker_ratio: float
     marker_width: float

@@ -263,7 +263,6 @@ def find_tag(
                 comp = np.argmax(histogram)
                 if excluded > len(exclude_idx):
                     print('Error: Image is not usable')
-                    idx2 = -1
                     break
                 else:
                     excluded += 1
@@ -297,45 +296,37 @@ def find_tag(
         histogram[root_idx] = 0
         result = np.zeros_like(image_copy)
         result[root_idx_list] = 1
-        return result, histogram, i_max, i_min, j_min, j_max  # [right:left, bottom:top], histogram
+        return idx2, histogram, i_max, i_min, j_min, j_max  # [right:left, bottom:top], histogram
 
 
 def find_excised(
         image: np.ndarray,
         histogram,
-        exclude_idx,
-        crown_min,
-        crown_max):
+        exclude_idx):
     print('Finding excised root')
     image_copy = image.copy()
-    idx2 = -1
     counter = 0
     again = True
 
-    # We loop through detected objects to identify them.
-    # During recognition the labeled image has to be made free of noise.
-    # Therefore we have to copy it.
     while again:
         counter += 1
-        if counter > 30: break
-        print('excised root loop')
-        again = False
-        nr_objects = len(histogram)
-        if nr_objects > 1:
-            comp = np.argmax(histogram)
-            count = 0
-            if comp in exclude_idx:
+        if counter > 30:
+            break
 
-                histogram[comp] = 0
-                comp = np.argmax(histogram)
-                if count > len(exclude_idx):
-                    print('Error: Image is not usable')
-                    idx2 = -1
+        again = False
+        objects = len(histogram)
+        if objects > 1:
+            component = np.argmax(histogram)
+            excluded = 0
+            if component in exclude_idx:
+                histogram[component] = 0
+                component = np.argmax(histogram)
+                if excluded > len(exclude_idx):
+                    print("Unable to find excised root")
                     break
                 else:
-                    count += 1
-            idx2 = comp
-            histogram[idx2] = 0
+                    excluded += 1
+            idx2 = component
         else:
             idx2 = -1
 
@@ -348,25 +339,24 @@ def find_excised(
             jMin = np.min(idx[1])
             iMax = np.max(idx[0])
             jMax = np.max(idx[1])
-            print('xMin and xMax of Excised Root: ' + str(jMin) + ' ' + str(jMax))
-            print('yMin and yMax of Excised Root: ' + str(iMin) + ' ' + str(iMax))
-            print('xMax of crown: ' + str(crown_max))
-            print('xMin of crown: ' + str(crown_min))
-            sel = image_copy != idx2
-            image_copy[sel] = 0
+
+            selection = image_copy != idx2
+            image_copy[selection] = 0
             nonZ = len(idx[0])
             boundingBoxSize = (iMax - iMin) * (jMax - jMin)
             zeros = boundingBoxSize - nonZ
             ratio = float(zeros) / float(nonZ)
             print('ratio: ' + str(ratio))
 
-            if counter >= nr_objects:
+            if counter >= objects:
                 again = False
         except:
             again = True
-    sel = image_copy == idx2
-    image_copy[sel] = 255
-    return idx2, image_copy[iMin:iMax, jMin:jMax], (iMax + iMin) / 2, (jMax + jMin) / 2,
+
+    selection = image_copy == idx2
+    image_copy[selection] = 255
+
+    return idx2, iMin, iMax, jMin, jMax, image_copy[iMin:iMax, jMin:jMax], (iMax + iMin) / 2, (jMax + jMin) / 2,
 
 
 def medial_axis_skeleton(image: np.ndarray) -> (np.ndarray, np.ndarray):
@@ -457,22 +447,18 @@ def segment_internal(options: DIRTOptions, image: np.ndarray):
         pass
 
     # find excised root(s)
-    if options.excised_roots > 1 and options.crown_root:
-        for i in range(options.excised_roots):
-            exRIdx, imgExRoot, centerPtx, centerPty = find_excised(
-                labeled.copy(),
-                histogram,
-                [marker, tag, crown],
-                crown_left,
-                crown_right)
-            print(f"Found excised root {i}")
-    elif options.excised_roots == 1 and not options.crown_root:
-        exRIdx, imgExRoot, centerPtx, centerPty = find_excised(
-            labeled.copy(),
-            histogram,
-            [marker, tag],
-            0,
-            1)
+    # if options.excised_roots > 1 and options.crown_root:
+    #     for i in range(options.excised_roots):
+    #         exRIdx, excised_left, excised_right, excised_top, excised_bottom, imgExRoot, centerPtx, centerPty = find_excised(
+    #             labeled.copy(),
+    #             histogram,
+    #             [marker, tag, crown])
+    #         print(f"Found excised root {i}")
+    # elif options.excised_roots == 1 and not options.crown_root:
+    #     exRIdx, excised_left, excised_right, excised_top, excised_bottom, imgExRoot, centerPtx, centerPty = find_excised(
+    #         labeled.copy(),
+    #         histogram,
+    #         [marker, tag])
 
     # save masked image to file
     imageio.imwrite(f"{output_prefix}.mask.png", skimage.img_as_uint(image))
@@ -488,7 +474,7 @@ def segment_internal(options: DIRTOptions, image: np.ndarray):
     crown_patch.set_alpha(0.5)
     ax.add_patch(crown_patch)
     plt.axis('off')
-    plt.savefig(f"{output_prefix}.crown.bounding.png")
+    plt.savefig(f"{output_prefix}.bounding.crown.png")
     plt.clf()
 
     # save marker bounding box overlay to file
@@ -502,7 +488,7 @@ def segment_internal(options: DIRTOptions, image: np.ndarray):
     marker_patch.set_alpha(0.5)
     ax.add_patch(marker_patch)
     plt.axis('off')
-    plt.savefig(f"{output_prefix}.marker.bounding.png")
+    plt.savefig(f"{output_prefix}.bounding.marker.png")
     plt.clf()
 
     # save tag bounding box overlay to file
@@ -516,7 +502,7 @@ def segment_internal(options: DIRTOptions, image: np.ndarray):
     tag_patch.set_alpha(0.5)
     ax.add_patch(tag_patch)
     plt.axis('off')
-    plt.savefig(f"{output_prefix}.tag.bounding.png")
+    plt.savefig(f"{output_prefix}.bounding.tag.png")
     plt.clf()
 
     return '', marker_ratio, marker_width, marker_height
