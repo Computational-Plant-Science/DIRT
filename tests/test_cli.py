@@ -22,8 +22,8 @@ test_files = [
 @pytest.mark.parametrize("test_file", test_files)
 def test_cli(test_file):
     runner = CliRunner()
-    print(join(test_dir, 'output'))
+    # Path(join(test_dir, 'output')).mkdir(parents=True, exist_ok=True)
     result = runner.invoke(
         cli,
-        [test_file, '--output_directory', join(test_dir, 'output')])
+        [join(test_dir, 'data', test_file), '--output_directory', join(test_dir, 'output')])
     assert result.exit_code == 0
