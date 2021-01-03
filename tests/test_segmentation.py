@@ -14,6 +14,8 @@ from options import DIRTOptions
 from segmentation import segment, calculate_histogram, find_marker, find_crown, find_tag, find_tag, find_excised
 
 test_dir = Path(__file__).parent
+output_dir = join(test_dir, 'output')
+Path(output_dir).mkdir(parents=True, exist_ok=True)
 test_images = [
     'cassava1.jpg',
     'cassava2.jpg',
@@ -47,7 +49,7 @@ def test_calculate_histogram(image_file):
 
     # for visual sanity check
     plt.bar(bin_edges[:-1], histogram, width=np.shape(labeled)[1] / 100)
-    plt.savefig(join(test_dir, 'output', f"{options.input_stem}.histogram.png"))
+    plt.savefig(join(output_dir, f"{options.input_stem}.histogram.png"))
     plt.clf()
 
 
@@ -75,7 +77,7 @@ def test_find_marker(image_file):
     rect = patches.Rectangle((marker_top, marker_left), marker_bottom - marker_top, marker_right - marker_left, edgecolor='r')
     rect.set_alpha(0.4)
     ax.add_patch(rect)
-    plt.savefig(join(test_dir, 'output', f"{options.input_stem}.bounding.marker.png"))
+    plt.savefig(join(output_dir, f"{options.input_stem}.bounding.marker.png"))
     plt.clf()
 
 
@@ -108,7 +110,7 @@ def test_find_tag(image_file):
     tag_patch = patches.Rectangle((tag_top, tag_left), tag_bottom - tag_top, tag_right - tag_left, edgecolor='r')
     tag_patch.set_alpha(0.4)
     ax.add_patch(tag_patch)
-    plt.savefig(join(test_dir, 'output', f"{options.input_stem}.bounding.tag.png"))
+    plt.savefig(join(output_dir, f"{options.input_stem}.bounding.tag.png"))
     plt.clf()
 
 
@@ -134,7 +136,7 @@ def test_find_crown(image_file):
     rect = patches.Rectangle((crown_top, crown_left), crown_bottom - crown_top, crown_right - crown_left, edgecolor='r')
     rect.set_alpha(0.4)
     ax.add_patch(rect)
-    plt.savefig(join(test_dir, 'output', f"{options.input_stem}.bounding.crown.png"))
+    plt.savefig(join(output_dir, f"{options.input_stem}.bounding.crown.png"))
     plt.clf()
 
 
@@ -179,7 +181,7 @@ def test_find_excised(image_file):
         edgecolor='r')
     rect.set_alpha(0.4)
     ax.add_patch(rect)
-    plt.savefig(join(test_dir, 'output', f"{options.input_stem}.bounding.excised.png"))
+    plt.savefig(join(output_dir, f"{options.input_stem}.bounding.excised.png"))
     plt.clf()
 
 
@@ -214,7 +216,7 @@ def test_correct_for_stem(image_file):
     rect = patches.Rectangle((stem_top, stem_left), stem_bottom - stem_top, stem_right - stem_left, edgecolor='r')
     rect.set_alpha(0.4)
     ax.add_patch(rect)
-    plt.savefig(join(test_dir, 'output', f"{options.input_stem}.bounding.stem.png"))
+    plt.savefig(join(output_dir, f"{options.input_stem}.bounding.stem.png"))
     plt.clf()
 
     # for visual sanity check
@@ -225,7 +227,7 @@ def test_correct_for_stem(image_file):
 def test_segmentation(image_file):
     options = DIRTOptions(
         input_file=join(test_dir, 'data', image_file),
-        output_directory=join(test_dir, 'output'))
+        output_directory=output_dir)
     image = imageio.imread(options.input_file, as_gray=True)
     masked = binary_threshold(image.astype(np.uint8))
     results = segment(options, masked)

@@ -17,8 +17,6 @@ from results import DIRTResults
 
 def calculate_histogram(image: np.ndarray) -> (np.ndarray, np.array, int, int, List[list], List[list]):
     flattened = image.flatten()
-    print(flattened)
-    # print(np.max(flattened))
     histogram, bin_edges = np.histogram(flattened, bins=np.max(image) + 1)
 
     # background can have less pixels than foreground if no markers are in the image
@@ -49,7 +47,7 @@ def calculate_histogram(image: np.ndarray) -> (np.ndarray, np.array, int, int, L
 
 
 def find_marker(image: np.ndarray, histogram, x_components, y_components):
-    print('Finding circle')
+    print('Finding marker')
     ratio = []
     w, h = np.shape(image)
 
@@ -102,19 +100,15 @@ def find_marker(image: np.ndarray, histogram, x_components, y_components):
     image[sel] = 0
 
     if rect > 0.2:
-        print('No circle detected')
+        print('No marker detected')
         rect = 1
         rect_idx = 0
 
-    # print(i_max, y_max)
-    # print(i_min, y_min)
-    # print(j_max, x_max)
-    # print(j_min, x_min)
     return rect_idx, rect, i_max, i_min, j_min, j_max, image[i_min:i_max, j_min:j_max]
 
 
 def find_crown(image: np.ndarray, histogram):
-    print('Finding root')
+    print('Finding crown')
     image_copy = image.copy()
     height, width = np.shape(image_copy)
     found = False
@@ -286,7 +280,6 @@ def find_tag(
             bounding_box_size = (i_max - i_min) * (j_max - j_min)
             zeros = bounding_box_size - non_z
             ratio = float(zeros) / float(non_z)
-            print('ratio: ' + str(ratio))
 
             if counter >= objects:
                 again = False
@@ -346,7 +339,6 @@ def find_excised(
             boundingBoxSize = (iMax - iMin) * (jMax - jMin)
             zeros = boundingBoxSize - nonZ
             ratio = float(zeros) / float(nonZ)
-            print('ratio: ' + str(ratio))
 
             if counter >= objects:
                 again = False
