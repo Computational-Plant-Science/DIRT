@@ -1,4 +1,4 @@
-*/*.pyc
+**/*.pyc
 
 # Eclipse IDE's project files
 .project
