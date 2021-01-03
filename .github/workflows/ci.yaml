@@ -40,7 +40,7 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: |
-          docker run -t -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN -e COVERALLS_PARALLEL=$COVERALLS_PARALLEL -v $PWD:/opt/dev -w /opt/dev computationalplantscience/dirt coverage run -m pytest -s && coveralls
+          docker run -t -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN -e COVERALLS_PARALLEL=$COVERALLS_PARALLEL -v $PWD:/opt/dev -w /opt/dev computationalplantscience/dirt coverage run --source="/opt/dev/" -m pytest -s && coveralls
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
