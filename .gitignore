@@ -9,5 +9,10 @@
 # Dirt output
 dirt_out.csv
 
-# test data
-data
+# test outputs
+tests/output/*.jpg
+tests/output/*.jpeg
+tests/output/*.png
+tests/output/*.yml
+tests/output/*.yaml
+tests/output/*.csv

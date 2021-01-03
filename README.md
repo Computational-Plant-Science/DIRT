@@ -1,81 +1,105 @@
-------------------------------------------------------------
-DIRT 1.1 - An automatic high throughput root phenotyping platform
-(c) 2014,2016 Alexander Bucksch - bucksch@uga.edu
-Web application by Abhiram Das - abhiram.das@gmail.com
+# DIRT 
 
-http://dirt.iplantcollaborative.org
+An automatic root phenotyping tool.
 
-User and developer group: 
-https://groups.google.com/forum/#!forum/dirt-users
+## Requirements
 
-University of Georgia, Athens
-------------------------------------------------------------
+- [Python3](https://www.python.org)
+- Docker
 
-The software is written and tested in:
-- python 2.7 (https://www.python.org)
+### Python dependencies
 
 The software depends on:
-- the graphtools package (http://graph-tool.skewed.de) 
-- the mahotas package (http://luispedro.org/software/mahotas)
-- the numpy package (http://sourceforge.net/projects/numpy/)
-- the scipy package (http://www.scipy.org/SciPy)
+- [`graph-tool`](http://graph-tool.skewed.de)
+- [`mahotas`](http://luispedro.org/software/mahotas)
+- [`numpy`](http://sourceforge.net/projects/numpy/)
+- [`scipy`](http://www.scipy.org/SciPy)
+- [`matplotlib`](https://matplotlib.org/)
+- [`scikit-image`](https://scikit-image.org/)
+- [`imageio`](https://imageio.github.io/)
+- [`click`](https://click.palletsprojects.com/en/7.x/)
+- [`pandas`](https://pandas.pydata.org/)
 
-Optionally binaries of standard OCR and BarCode software can be used for tag recognition:
+### Binary dependencies
 
-- tesseract (https://code.google.com/p/tesseract-ocr/)
-paths have to be adjusted in /DIRTocr/pytesser.py (line 12-14)
+- [tesseract](https://code.google.com/p/tesseract-ocr/)
+- [zbar](http://zbar.sourceforge.net)
 
-- zbar (http://zbar.sourceforge.net) 
-path has to be adjusted in /DIRTocr/__init__.py (line 28)
+## Installation
 
-Usage:
-<run file path> full path to the root image
-<unique id> ID which will be a folder name in the working directory. Integer value needed.
-<mask threshold> multiplier for the automatically determined mask threshold. 1.0 works fine and is default. For example, if a flashlight is used to take root images, then 0.6 is a good choice.
-<excised roots> number of roots placed at the right of the root crown, 0 - excised root analysis is off
-<crown root> 1 - crown root analysis is on, 0 - crown root analysis is off
-<segmentation> 1 -  is on, 0 - is off. Off refers to a pre-existing segmention done with DIRT. Binary masks as input images are detected automatically.
-<marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.
-<stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off
-<plots> 1 - plotting data is stored, 0 - plotting data is not stored
-<output format> 1 - the full trait set is put into one excel file containing empty cells for traits that were not computed, 0 - only computed files are written to the output file
-<working directory> full path to folder were the result is stored
-<trait file path> full path to .csv file containing the traits to be computed'
+Clone the repo with `git clone `.
 
-Example: 
-python main.py /Documents/image_name.jpg 8 25.0 1 1 1 25.1 0 0 0 /Documents/image_folder/ /Documents/traits.csv
+## Usage
 
-Notes on common questions:
-- Input is restricted to .jpg, .png and .tif images
-- It is not possible to analyze only an excised root when a root crown is in the image. However, it is possible to analyze compute images containing only excised roots.
+A good way to get a feel for DIRT is to run the test cases:
 
-------------------------------------------------------------
+```bash
+docker run -it -v $PWD:/opt/dev -w /opt/dev computationalplantscience/dirt pytest -s
+```
 
-For convenience we provide the runOnFolder script, that executes DIRT on all images in a specified folder. 
-Note we made the masking threshold available on the command line because of user requests.
+At its simplest, DIRT can be invoked with:
 
-Example: python runOnFolder.py /Users/image_folder/ <masking threshold>
+```bash
+dirt.py <image file>
+```
 
-Please adjust line 86 according to the description above and note that the script uses 6 cores to compute images in parallel. The number of cores can be adjusted in line 80.
+For instance, `dirt.py root1.png` or `dirt.py root2.jpg`. Supported filetypes are JPEG, PNG, and TIFF.
 
-------------------------------------------------------------
+Other command line arguments include:
 
-Updates in DIRT 1.1 (21 June 2019):
-------------------------------------------------------------
-- Some bug fixes on the avg. root density. There was a problem with very young and sparse root system. The formula changed and is now normed to the max. width instead of the max. width of the line.
+- `--output_directory`: directory to write output files to
+- `--excised_roots`: number of root segments discontinuous with the root crown (should be placed to the immediate right of the crown)
+- `--marker_diameter`: 
+- `--stem_reconstruction`: whether to correct crown root segmentation for stem regions
+- `--plot`: whether to store plotting data
+
+Note that it is not possible to analyze only an excised root when a root crown is in the image. However, it is possible to analyze compute images containing only excised roots.
+
+## References
+
+This software uses, modifies, or references:
+- http://www.daniweb.com/software-development/python/threads/31449/k-means-clustering
+- Adaptive thresholding code from [`scikit-image`](http://scikit-image.org)
+- Orientation correction code from [`python-image-orientation-patch`](https://github.com/kylefox/python-image-orientation-patch)
+
+## Attribution
+
+Please cite the DIRT publication if you use DIRT for your project.:
+
+Bucksch et al., 2014 "Image-based high-throughput field phenotyping of crop roots", Plant Physiology
+
+## Author
+
+Alexander Bucksch
+Department of Plant Biology
+Warnell School of Forestry and Natural Resources
+Institute of Bioinformatics
+University of Georgia
+[Email](mailto:bucksch@uga.edu)
+[Website](http://www.computational-plant-science.org)
+
+## Changelog
+
+### January 2021
+
+CLI refactored and tests added anticipating installation on PlantIT.
+
+### 21 June 2019
+
+Some bug fixes on the avg. root density. There was a problem with very young and sparse root system. The formula changed and is now normed to the max. width instead of the max. width of the line.
 The bug was found by Peng Wang at the University of Nebraska.
 
-Updates in DIRT 1.1 (11 January 2016):
-------------------------------------------------------------
-- Minor bug fixes in Preprocessing.py to allow smaller circle markers and fix a possible missdetection of the experiment tag as the circle. 
+### 11 January 2016
+
+Minor bug fixes in Preprocessing.py to allow smaller circle markers and fix a possible missdetection of the experiment tag as the circle. 
 Thanks to Linda Zamariola (U Bologna) for finding this issue.
 
-Updates in DIRT 1.1 (4 November 2015):
-------------------------------------------------------------
-- Minor bug fixes in the excised root calculations. Thanks to Alexandre Grondin (U Nebraska) for discovering and validating the fixes.
+### 4 November 2015
 
-Changes in DIRT 1.1 (14 January 2015):
-------------------------------------------------------------
+Minor bug fixes in the excised root calculations. Thanks to Alexandre Grondin (U Nebraska) for discovering and validating the fixes.
+
+### 14 January 2015
+
 - storage of trait values is changed from a list data structure to a dictionary to allow trait selection controlled by the file traits.csv
 - added support for trait selection to reduce computation time. See example file traits.csv (1 - trait is computed, 0 - trait is not computed)
 - removed unused tip-diameter switch on the command line

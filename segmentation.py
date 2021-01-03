@@ -1,552 +1,543 @@
-"""
-Segmentation.py
-
-The Segmentation module for DIRT. We perform connected component labeling and construct the medial axis graph here.
-
-The code is free for non-commercial use.
-Please contact the author for commercial use.
-
-Please cite the DIRT Paper if you use the code for your scientific project.
-
-Bucksch et al., 2014 "Image-based high-throughput field phenotyping of crop roots", Plant Physiology
-
--------------------------------------------------------------------------------------------
-Author: Alexander Bucksch
-School of Biology and Interactive computing
-Georgia Institute of Technology
-
-Mail: bucksch@gatech.edu
-Web: http://www.bucksch.nl
--------------------------------------------------------------------------------------------
-
-Copyright (c) 2014 Alexander Bucksch
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-  * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-
-  * Redistributions in binary form must reproduce the above
-    copyright notice, this list of conditions and the following
-    disclaimer in the documentation and/or other materials provided
-    with the distribution.
-
-  * Neither the name of the DIRT Developers nor the names of its
-    contributors may be used to endorse or promote products derived
-    from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
-import os
 import time
-
-from options import DIRTOptions
-from orientation import fix_orientation
-from preprocessing import Preprocessing
+from os.path import join
+from typing import List
 
 import imageio
+import matplotlib.pyplot as plt
 import numpy as np
+import skimage
+from matplotlib import patches
 from scipy import ndimage
-import graph_tool.topology as gt
-import graph_tool.util as gu
-from graph_tool import Graph
-import mahotas as m
+from scipy.ndimage import distance_transform_edt
+from skimage.morphology import medial_axis
+
+from options import DIRTOptions
+from results import DIRTResults
 
 
-class Segmentation(object):
+def calculate_histogram(image: np.ndarray) -> (np.ndarray, np.array, int, int, List[list], List[list]):
+    flattened = image.flatten()
+    print(flattened)
+    # print(np.max(flattened))
+    histogram, bin_edges = np.histogram(flattened, bins=np.max(image) + 1)
 
-    def __init__(self, img, tips=[]):
-        self.__img = img
-        self.__height, self.__width = np.shape(self.__img)
-        self.__tips = tips
-        self.__fail = False
+    # background can have less pixels than foreground if no markers are in the image
+    if len(np.unique(image)) == 2:  # image is binary
+        white_pixels = len(np.where(image == 255)[1])
+        largest_feature = np.max(histogram)
+        if largest_feature == white_pixels:
+            largest_feature = np.min(histogram)
+        histogram[list(histogram).index(largest_feature)] = 0  # add feature
+    else:
+        largest_feature = np.max(histogram)
+        histogram[list(histogram).index(largest_feature)] = 0
 
-    def getFail(self):
-        return self.__fail
+    for i in range(len(histogram)):
+        if histogram[i] < 100:
+            histogram[i] = 0
 
-    def setTips(self, tips):
-        '''
-        BAD HACK. DO IT CLEAN IN THE REFACTORED VERSION
-        '''
-        self.__tips = tips
+    x_components = [[] for _ in range(len(histogram))]
+    y_components = [[] for _ in range(len(histogram))]
 
-    def label(self, onlyOne=True):
+    height, width = np.shape(image)
+    for i in range(width):
+        for j in range(height):
+            x_components[image[j][i]].append(i)
+            y_components[image[j][i]].append(j)
 
-        labeled, nr_objects = ndimage.label(self.__img)
-        print('Number of components: ' + str(nr_objects))
-        # if nr_objects>2: return None
-        if nr_objects == 0: return None
-        val = labeled.flatten()
-        hist = []
-        hist += range(np.max(val) + 1)
-        test, _ = np.histogram(val, hist)
-        comp1 = np.max(test)
-        idx1 = list(test).index(comp1)
+    return histogram, bin_edges, x_components, y_components
 
-        if nr_objects > 1:
-            test[idx1] = 0
-            comp2 = np.max(test)
-            idx2 = list(test).index(comp2)
-            test[idx2] = 0
-        else:
-            idx2 = 1
 
-        idx = np.where(labeled == idx2)
-        # bounding box
-        iMin = np.min(idx[0])
-        jMin = np.min(idx[1])
-        iMax = np.max(idx[0])
-        jMax = np.max(idx[1])
+def find_marker(image: np.ndarray, histogram, x_components, y_components):
+    print('Finding circle')
+    ratio = []
+    w, h = np.shape(image)
 
-        return labeled[iMin:iMax, jMin:jMax]  # just return the cropped image of the largest component
+    for i in range(len(x_components)):
+        if histogram[i] > 0:
+            x_min = np.min(x_components[i])
+            x_max = np.max(x_components[i])
+            y_min = np.min(y_components[i])
+            y_max = np.max(y_components[i])
+            non_z = len(x_components[i])
+            all_px = (x_max - x_min) * (y_max - y_min)
+            square_to_circle_ratio = float(non_z) / float(all_px)
 
-    def labelAll(self):
-        labeled, nr_objects = ndimage.label(self.__img)
-        return labeled, nr_objects
-
-    def findThickestPath(self, skelImg, skelDia, xScale, yScale):
-        print('create skeleton graph')
-        skelGraph, skelSize = self.makeGraphFast(skelImg, skelDia, xScale, yScale)
-        rootVertex, _ = self.findRootVertex(skelGraph)
-        epropW = skelGraph.edge_properties["w"]
-
-        maxDia = np.max(skelDia)
-        try:
-            diaIdx = int(len(skelDia) * 0.1)
-        except:
-            print("Error line 234 in Segmentation.py")
-            diaIdx = 1
-        maxDia10 = np.max(skelDia[0:diaIdx])
-        print('max Diameter: ' + str(maxDia))
-        path = []
-        # remove all two-connected ones with 0 label
-        print('trace path of thickest diameter')
-        # find thickest path
-        pathDetect = True
-        if skelGraph.num_vertices() > 0:
-
-            pathDetect = True
-            while pathDetect == True:
-                lastVertex = self.findLastRootVertex(skelGraph)
-                try:
-                    path, _ = gt.shortest_path(skelGraph, rootVertex, lastVertex, weights=epropW, pred_map=None)
-                    pathDetect = False
-                except:
-                    raise
-                    if lastVertex <= 0:
-                        pathDetect = False
+            # compensates for small noisy components and small excised roots
+            if float(non_z) / float(w * h) > 0.0001:
+                # the inscribed circle of a bounding box fills exactly 78.64 percent.
+                # We allow 8.64 percent variation due to noise
+                if square_to_circle_ratio > 0.7:
+                    # sanity check
+                    if (float(y_max) - float(y_min)) > 0:
+                        # determine tag ratio
+                        tagRatio = (float(x_max) - float(x_min)) / (float(y_max) - float(y_min))
+                        ratio.append(np.abs(1 - (float(x_max) - float(x_min)) / (float(y_max) - float(y_min))))
                     else:
-                        skelGraph.remove_vertex(lastVertex)
-                        lastVertex = self.findLastRootVertex(skelGraph)
-
-        return path, skelGraph, maxDia10, skelSize
-
-    def findThickestPathLateral(self, skelImg, skelDia, xScale, yScale):
-        print('create skeleton graph')
-        skelGraph, _ = self.makeGraphFast(skelImg, skelDia, xScale, yScale)
-        rootVertex = self.findRootVertexLateral(skelGraph)
-        epropW = skelGraph.edge_properties["w"]
-
-        path = []
-        # remove all two-connected ones with 0 label
-        print('trace path of thickest diameter')
-        # find thickest path
-        pathDetect = True
-        if skelGraph.num_vertices() > 0:
-            pathDetect = True
-            while pathDetect == True:
-                lastVertex = self.findLastRootVertex(skelGraph)
-                try:
-                    path, _ = gt.shortest_path(skelGraph, rootVertex, lastVertex, weights=epropW, pred_map=None)
-                    pathDetect = False
-                except:
-                    raise
-                    if lastVertex <= 0:
-                        pathDetect = False
-                    else:
-                        skelGraph.remove_vertex(lastVertex)
-                        lastVertex = self.findLastRootVertex(skelGraph)
-
-        return path, skelGraph
-
-    def makeGraphFast(self, img, dia, xScale, yScale):
-        print('Building Graph Data Structure'),
-        start = time.time()
-        G = Graph(directed=False)
-        sumAddVertices = 0
-
-        vprop = G.new_vertex_property('object')
-        eprop = G.new_edge_property('object')
-        epropW = G.new_edge_property("float")
-        h, w = np.shape(img)
-        if xScale > 0 and yScale > 0:
-            avgScale = (xScale + yScale) / 2
-        else:
-            avgScale = 1.
-            xScale = 1.
-            yScale = 1.
-        addedVerticesLine2 = []
-        vListLine2 = []
-        percentOld = 0
-        counter = 0
-        '''
-        Sweep over each line in the image except the last line
-        '''
-        for idx, i in enumerate(img[:len(img) - 2]):
-            '''
-            Get foreground indices in the current line of the image and make vertices
-            '''
-            counter += 1
-            percent = (float(counter) / float(h)) * 100
-            if percentOld + 10 < percent:
-                print(str(np.round(percent, 1)) + '% '),
-                percentOld = percent
-
-            line1 = np.where(i == True)
-            if len(line1[0]) > 0:
-                line1 = set(line1[0]).difference(set(addedVerticesLine2))
-                vL = G.add_vertex(len(list(line1)))
-
-                if len(line1) > 1:
-                    vList = vListLine2 + list(vL)
+                        ratio.append(1000)
                 else:
-                    vList = vListLine2 + [vL]
-                line1 = addedVerticesLine2 + list(line1)
-                for jdx, j in enumerate(line1):
-                    vprop[vList[jdx]] = {'imgIdx': (j, idx), 'coord': (float(j) * xScale, float(idx) * yScale),
-                                         'nrOfPaths': 0, 'diameter': float(dia[idx][j]) * avgScale}
-                '''
-                keep order of the inserted vertices
-                '''
-                sumAddVertices += len(line1)
-
-                addedVerticesLine2 = []
-                vListLine2 = []
-                '''
-                Connect foreground indices to neighbours in the next line
-                '''
-                for v1 in line1:
-                    va = vList[line1.index(v1)]
-                    diagonalLeft = diagonalRight = True
-                    try:
-                        if img[idx][v1 - 1] == True:
-                            diagonalLeft = False
-                            vb = vList[line1.index(v1 - 1)]
-                            e = G.add_edge(va, vb)
-                            eprop[e] = {'coord1': vprop[va]['coord'], 'coord2': vprop[vb]['coord'],
-                                        'weight': ((vprop[va]['diameter'] + vprop[vb]['diameter']) / 2), 'RTP': False}
-                            epropW[e] = 2. / (eprop[e]['weight'] ** 2)
-                    except:
-                        print('Boundary vertex at: ' + str([v1, idx - 1]) + ' image size: ' + str([w, h]))
-                        pass
-
-                    try:
-                        if img[idx][v1 + 1] == True:
-                            diagonalRight = False
-                            vb = vList[line1.index(v1 + 1)]
-                            e = G.add_edge(va, vb)
-                            eprop[e] = {'coord1': vprop[va]['coord'], 'coord2': vprop[vb]['coord'],
-                                        'weight': ((vprop[va]['diameter'] + vprop[vb]['diameter']) / 2), 'RTP': False}
-                            epropW[e] = 2. / (eprop[e]['weight'] ** 2)
-                    except:
-                        print('Boundary vertex at: ' + str([v1 + 1, idx]) + ' image size: ' + str([w, h]))
-                        pass  # just if we are out of bounds
-
-                    try:
-                        if img[idx + 1][v1] == True:
-                            diagonalRight = False
-                            diagonalLeft = False
-                            vNew = G.add_vertex()
-                            vprop[vNew] = {'imgIdx': (v1, idx + 1),
-                                           'coord': (float(v1) * xScale, float(idx + 1) * yScale), 'nrOfPaths': 0,
-                                           'diameter': float(dia[idx + 1][v1]) * avgScale}
-                            vListLine2.append(vNew)
-                            e = G.add_edge(vList[line1.index(v1)], vNew)
-                            eprop[e] = {'coord1': vprop[va]['coord'], 'coord2': vprop[vNew]['coord'],
-                                        'weight': ((vprop[va]['diameter'] + vprop[vNew]['diameter']) / 2), 'RTP': False}
-                            epropW[e] = 1. / (eprop[e]['weight'] ** 2)
-                            if v1 not in addedVerticesLine2: addedVerticesLine2.append(v1)
-                    except:
-                        print('Boundary vertex at: ' + str([v1, idx + 1]) + ' image size: ' + str([w, h]))
-                        pass
-
-                    try:
-                        if diagonalRight == True and img[idx + 1][v1 + 1] == True:
-                            vNew = G.add_vertex()
-                            vprop[vNew] = {'imgIdx': (v1 + 1, idx + 1),
-                                           'coord': (float(v1 + 1) * xScale, float(idx + 1) * yScale), 'nrOfPaths': 0,
-                                           'diameter': float(dia[idx + 1][v1 + 1]) * avgScale}
-                            vListLine2.append(vNew)
-                            e = G.add_edge(vList[line1.index(v1)], vNew)
-                            eprop[e] = {'coord1': vprop[va]['coord'], 'coord2': vprop[vNew]['coord'],
-                                        'weight': ((vprop[va]['diameter'] + vprop[vNew]['diameter']) / 2), 'RTP': False}
-                            epropW[e] = 1.41 / (eprop[e]['weight'] ** 2)
-                            if v1 + 1 not in addedVerticesLine2: addedVerticesLine2.append(v1 + 1)
-                    except:
-                        print('Boundary vertex at: ' + str([v1 + 1, idx + 1]) + ' image size: ' + str([w, h]))
-                        pass
-
-                    try:
-                        if diagonalLeft == True and img[idx + 1][v1 - 1] == True:
-                            vNew = G.add_vertex()
-                            vprop[vNew] = {'imgIdx': (v1 - 1, idx + 1),
-                                           'coord': (float(v1 - 1) * xScale, float(idx + 1) * yScale), 'nrOfPaths': 0,
-                                           'diameter': float(dia[idx + 1][v1 - 1]) * avgScale}
-                            vListLine2.append(vNew)
-                            e = G.add_edge(vList[line1.index(v1)], vNew)
-                            eprop[e] = {'coord1': vprop[va]['coord'], 'coord2': vprop[vNew]['coord'],
-                                        'weight': ((vprop[va]['diameter'] + vprop[vNew]['diameter']) / 2), 'RTP': False}
-                            epropW[e] = 1.41 / (eprop[e]['weight'] ** 2)
-                            if v1 - 1 not in addedVerticesLine2: addedVerticesLine2.append(v1 - 1)
-                    except:
-                        print('Boundary vertex at: ' + str([v1 - 1, idx + 1]) + ' image size: ' + str([w, h]))
-                        pass
-                    try:
-                        if img[idx][v1 + 1] == False and img[idx][v1 - 1] == False and img[idx + 1][
-                            v1] == False and diagonalLeft == False and diagonalRight == False:
-                            print('tip detected')
-                            if img[idx - 1][v1 - 1] == False and img[idx - 1][v1 + 1] == False and img[idx - 1][
-                                v1] == False:
-                                print('floating pixel')
-                    except:
-                        pass
-
-        print('done!')
-        G.edge_properties["ep"] = eprop
-        G.edge_properties["w"] = epropW
-        G.vertex_properties["vp"] = vprop
-        print('graph build in ' + str(time.time() - start))
-        l = gt.label_largest_component(G)
-        u = gt.GraphView(G, vfilt=l)
-        print('# vertices')
-        print(u.num_vertices())
-        print(G.num_vertices())
-        if u.num_vertices() != G.num_vertices(): self.__fail = float((G.num_vertices() - u.num_vertices())) / float(
-            G.num_vertices())
-        return u, u.num_vertices()
-
-    def findRootVertex(self, G):
-        print('finding root vertex X')
-        h = self.__height
-        vertexIndex = 0
-        dTmp = 0
-        dMax = 0
-        vprop = G.vertex_properties["vp"]
-        for v in G.vertices():
-            count = 0
-            for _ in v.out_neighbours():
-                count += 1
-                if count > 2:
-                    break
-            if count > 2:
-                dTmp = vprop[v]['diameter']
-                if vprop[v]['imgIdx'][1] < h:
-                    dMax = dTmp
-                    h = vprop[v]['imgIdx'][1]
-                    vertexIndex = v
-        return vertexIndex, dMax
-
-    def findRootVertexLateral(self, G):
-        print('finding root vertex X')
-        h = self.__height
-        vertexIndex = 0
-
-        vprop = G.vertex_properties["vp"]
-
-        for v in G.vertices():
-            if vprop[v]['imgIdx'][1] < h:
-                h = vprop[v]['imgIdx'][1]
-                vertexIndex = v
-        return vertexIndex
-
-    def findLastRootVertex(self, G):
-        dpath = 0
-        vertexIndex = 0
-        vprop = G.vertex_properties["vp"]
-        for i in G.vertices():
-            try:
-                if vprop[i]['imgIdx'][1] > dpath:
-                    dpath = vprop[i]['imgIdx'][1]
-                    vertexIndex = i
-            except:
-                pass
-        return vertexIndex
-
-    def findLaterals(self, RTP, G, scale, path):
-        if scale == 0.:
-            scale = 1.
-        corresBranchPoints = []
-        laterals = []
-        distToFirstLateral = 2000000000000000.
-        vprop = G.vertex_properties["vp"]
-        idx = self.findRootVertexLateral(G)
-        for i in RTP:
-            if len(i) > 0:
-                for bp in i:
-                    d = float(vprop[G.vertex(bp)]['diameter'])
-                    radius = int(d / scale)  # convert radius at branching point to pixels
-                    # print d,radius
-                    if radius > 0:
-                        break
-
-            # remove the radius from of the main trunk from the lateral length 
-            # to obtain the emerging lateral length from the surface
-
-            if radius + 2 < len(i):
-                lBranch = len(i[:radius])
-                laterals.append(i[radius:])
-                corresBranchPoints.append(i[0])
-
-        # if path is not given, then no distance to first lateral is computed
-        if path != None:
-
-            x = vprop[G.vertex(idx)]['imgIdx'][0]  # Note idx is a vertex object
-            y = vprop[G.vertex(idx)]['imgIdx'][1]
-
-            for i in corresBranchPoints:
-                try:
-                    ix = vprop[G.vertex(i)]['imgIdx'][0]  # Note: i is an index and the vertex object has to be called
-                    iy = vprop[G.vertex(i)]['imgIdx'][1]
-                    d = (ix - x) ** 2 + (iy - y) ** 2
-                    if d < distToFirstLateral:
-                        distToFirstLateral = np.sqrt(d)
-                except:
-                    pass
-
-        if path == None:
-            return laterals, corresBranchPoints
+                    ratio.append(1000)
+            else:
+                ratio.append(1000)
         else:
-            return laterals, corresBranchPoints, distToFirstLateral * scale
+            ratio.append(1000)
 
-    def findHypocotylCluster(self, thickestPath, rtpSkel):
-        print('find Cluster')
-        branchingPaths = []
-        branchingPoints = []
-        radius = []
-        vprop = rtpSkel.vertex_properties["vp"]
-        for i in thickestPath:
-            # if len(nx.neighbors(rtpSkel, i))>2:
-            branchingPaths.append(vprop[i]['nrOfPaths'])
-            branchingPoints.append(i)
-        # radius.append(rtpSkel.node[i]['diameter'])
+    rect = np.min(ratio)
+    rect_idx = list(ratio).index(rect)
 
-        for i in branchingPoints:
-            radius.append(vprop[i]['diameter'])
+    x_min = np.min(x_components[rect_idx])
+    x_max = np.max(x_components[rect_idx])
+    y_min = np.min(y_components[rect_idx])
+    y_max = np.max(y_components[rect_idx])
 
-        bp = []
-        rad = []
-        tmpAvg = 0.
-        counter = 0.
-        for i in range(len(branchingPoints) - 1):
-            if branchingPaths[i] == branchingPaths[i + 1]:
-                tmpAvg += radius[i]
-                counter += 1
-            elif counter > 0:
-                tmpAvg = tmpAvg / counter
-                rad.append(tmpAvg)
-                bp.append(branchingPaths[i])
-                counter = 0.
-                tmpAvg = 0.
+    idx = np.where(image == rect_idx)
 
-        return bp, rad
+    # bounding box
+    i_min = np.min(idx[0])
+    j_min = np.min(idx[1])
+    i_max = np.max(idx[0])
+    j_max = np.max(idx[1])
 
-    def makeSegmentationPicture(self, thickestPath, G, crownImg, xScale, yScale, c1x, c1y, c2x, c2y, c3x=None,
-                                c3y=None):
+    sel = image != rect_idx
+    image[sel] = 0
 
-        print('make cluster picture')
-        crownImg = m.as_rgb(crownImg, crownImg, crownImg)
-        vprop = G.vertex_properties["vp"]
-        for i in thickestPath:
+    if rect > 0.2:
+        print('No circle detected')
+        rect = 1
+        rect_idx = 0
 
-            if vprop[i]['nrOfPaths'] in c1y:
+    # print(i_max, y_max)
+    # print(i_min, y_min)
+    # print(j_max, x_max)
+    # print(j_min, x_min)
+    return rect_idx, rect, i_max, i_min, j_min, j_max, image[i_min:i_max, j_min:j_max]
 
-                y = int(vprop[i]['imgIdx'][0])
-                x = int(vprop[i]['imgIdx'][1])
-                try:
-                    crownImg[x][y] = (125, 0, 0)
-                except:
-                    pass
-                dia = vprop[i]['diameter'] / (xScale / 2 + yScale / 2)
-                dia = dia * 1.5
-                for j in range(int(dia)):
-                    try:
-                        crownImg[x][y + j] = (125, 0, 0)
-                    except:
-                        pass
-                    try:
-                        crownImg[x][y - j] = (125, 0, 0)
-                    except:
-                        pass
-                    try:
-                        crownImg[x - j][y] = (125, 0, 0)
-                    except:
-                        pass
-                    try:
-                        crownImg[x + j][y] = (125, 0, 0)
-                    except:
-                        pass
-            elif vprop[i]['nrOfPaths'] in c2y:
-                y = int(vprop[i]['imgIdx'][0])
-                x = int(vprop[i]['imgIdx'][1])
-                try:
-                    crownImg[x][y] = (125, 0, 0)
-                except:
-                    pass
-                dia = vprop[i]['diameter'] / (xScale / 2 + yScale / 2)
-                dia = dia * 1.5
-                for j in range(int(dia)):
-                    try:
-                        crownImg[x][y + j] = (0, 125, 0)
-                    except:
-                        pass
-                    try:
-                        crownImg[x][y - j] = (0, 125, 0)
-                    except:
-                        pass
-                    try:
-                        crownImg[x - j][y] = (0, 125, 0)
-                    except:
-                        pass
-                    try:
-                        crownImg[x + j][y] = (0, 125, 0)
-                    except:
-                        pass
-                y = int(vprop[i]['imgIdx'][0])
-                x = int(vprop[i]['imgIdx'][1])
-                try:
-                    crownImg[x][y] = (0, 0, 125)
-                except:
-                    pass
-                dia = vprop[i]['diameter'] / (xScale / 2 + yScale / 2)
-                dia = dia * 1.5
-                for j in range(int(dia)):
-                    try:
-                        crownImg[x][y + j] = (0, 0, 125)
-                    except:
-                        pass
-                    try:
-                        crownImg[x][y - j] = (0, 0, 125)
-                    except:
-                        pass
-                    try:
-                        crownImg[x - j][y] = (0, 0, 125)
-                    except:
-                        pass
-                    try:
-                        crownImg[x + j][y] = (0, 0, 125)
-                    except:
-                        pass
-        return crownImg
+
+def find_crown(image: np.ndarray, histogram):
+    print('Finding root')
+    image_copy = image.copy()
+    height, width = np.shape(image_copy)
+    found = False
+    idx_1 = 0
+    count = 0
+
+    # We keep this piece of debug code, because the problem occurs in 1 of 10,000 images.
+    # Perhaps we understand it one day.
+    while not found:
+        idx_1 = np.argmax(histogram)
+        idx = np.where(image_copy == idx_1)
+        if (np.max(idx[0]) + 1) == width and (np.max(idx[1]) + 1) == height and (np.min(idx[0])) == 0 and (
+                np.min(idx[1])) == 0:
+            if count < len(histogram):
+                found = False
+                count += 1
+            else:
+                found = True
+            print('Only 1 background component that is smaller than the foreground ??? Probably a bug in the Masking routine')
+        else:
+            found = True
+
+    # bounding box
+    i_min = np.min(idx[0])
+    i_max = np.max(idx[0])
+    j_min = np.min(idx[1])
+    j_max = np.max(idx[1])
+
+    return idx_1, idx, i_max, i_min, j_min, j_max
+
+
+# def find_tag(
+#         image,
+#         labelled_image,
+#         masked_image,
+#         circle_width,
+#         circle_height,
+#         histogram,
+#         comps_x,
+#         comps_y):
+#     print('Finding tag')
+#     ratio = []
+#
+#     for i in range(len(comps_x)):
+#         if histogram[i] > 0:
+#             x_min = np.min(comps_x[i])
+#             x_max = np.max(comps_x[i])
+#             y_min = np.min(comps_y[i])
+#             y_max = np.max(comps_y[i])
+#
+#             # The tag should cover at least 0.5% of the picture
+#             if 0.005 < float((x_max - x_min) * (y_max - y_min)) / float(circle_height * circle_width) < 0.01:
+#                 # The tag should have more length then height
+#                 if (x_max - x_min) >= 1.5 * (y_max - y_min):
+#                     # The tag should be in the upper half of the image
+#                     if y_min < (circle_height * 0.5):
+#                         tagRatio = (float(x_max) - float(x_min)) / (float(y_max) - float(y_min))
+#                         print('TagRatio detected: ' + str(tagRatio))
+#                         ratio.append((float(x_max) - float(x_min)) / (float(y_max) - float(y_min)))
+#                     else:
+#                         ratio.append(-1)
+#                 else:
+#                     ratio.append(-1)
+#             else:
+#                 ratio.append(-1)
+#         else:
+#             ratio.append(-1)
+#
+#     rect = np.max(ratio)
+#     if rect >= 0:
+#         rectIdx = list(ratio).index(rect)
+#         x_min = np.min(comps_x[rectIdx])
+#         x_max = np.max(comps_x[rectIdx])
+#         y_min = np.min(comps_y[rectIdx])
+#         y_max = np.max(comps_y[rectIdx])
+#     else:
+#         x_min = x_max = y_min = y_max = 0
+#         rectIdx = -1
+#
+#     print('Tag Ratio: ' + str(rect))
+#     if rect == -1:
+#         rectIdx = -1
+#         i_min = i_max = j_min = j_max = 0
+#     else:
+#         idx = np.where(labelled_image == rectIdx)
+#
+#         # bounding box
+#         i_min = np.min(idx[0])
+#         j_min = np.min(idx[1])
+#         i_max = np.max(idx[0])
+#         j_max = np.max(idx[1])
+#
+#     sel = labelled_image != rectIdx
+#     tag_crop = 10
+#     if rect >= 0:
+#         labelled_image[sel] = 0
+#         try:
+#             print('Checking for text')
+#             tagText = ocr.find_text(
+#                 image[i_min + tag_crop:i_max - tag_crop, j_min + tag_crop:j_max - tag_crop])
+#         except:
+#             tagText = 'Tag text extraction failed'
+#             pass
+#
+#         # this order prefers the barcode over the text reader
+#         try:
+#             print('Check for barcode')
+#             tagCode = ocr.find_barcode(
+#                 image[i_min + tag_crop:i_max - tag_crop, j_min + tag_crop:j_max - tag_crop])
+#             if len(tagCode) > 2:
+#                 tagText = tagCode[8:len(tagCode) - 1]
+#                 print(tagText)
+#             else:
+#                 print('Barcode too short: ' + tagCode)
+#         except:
+#             pass
+#     else:
+#         tagText = 'No label found'
+#
+#     return rectIdx, rect, i_max, i_min, j_min, j_max, masked_image[i_min + tag_crop:i_max - tag_crop, j_min + tag_crop:j_max - tag_crop], tagText
+
+
+def find_tag(
+        image,
+        histogram,
+        exclude_idx,
+        root_idx,
+        root_idx_list):
+    print('Finding tag')
+    image_copy = image.copy()
+    counter = 0
+    again = True
+
+    while again:
+        counter += 1
+        if counter > 30:
+            break
+
+        again = False
+        objects = len(histogram)
+        if objects > 1:
+            comp = np.argmax(histogram)
+            excluded = 0
+            if comp in exclude_idx:
+                histogram[comp] = 0
+                comp = np.argmax(histogram)
+                if excluded > len(exclude_idx):
+                    print('Error: Image is not usable')
+                    idx2 = -1
+                    break
+                else:
+                    excluded += 1
+            idx2 = comp
+        else:
+            idx2 = -1
+
+        image_copy = image.copy()
+        idx = np.where(image_copy == idx2)
+
+        # bounding box
+        try:
+            i_min = np.min(idx[0])
+            i_max = np.max(idx[0])
+            j_min = np.min(idx[1])
+            j_max = np.max(idx[1])
+
+            sel = image_copy != idx2
+            image_copy[sel] = 0
+            non_z = len(idx[0])
+            bounding_box_size = (i_max - i_min) * (j_max - j_min)
+            zeros = bounding_box_size - non_z
+            ratio = float(zeros) / float(non_z)
+            print('ratio: ' + str(ratio))
+
+            if counter >= objects:
+                again = False
+        except:
+            again = True
+    else:
+        histogram[root_idx] = 0
+        result = np.zeros_like(image_copy)
+        result[root_idx_list] = 1
+        return result, histogram, i_max, i_min, j_min, j_max  # [right:left, bottom:top], histogram
+
+
+def find_excised(
+        image: np.ndarray,
+        histogram,
+        exclude_idx,
+        crown_min,
+        crown_max):
+    print('Finding excised root')
+    image_copy = image.copy()
+    idx2 = -1
+    counter = 0
+    again = True
+
+    # We loop through detected objects to identify them.
+    # During recognition the labeled image has to be made free of noise.
+    # Therefore we have to copy it.
+    while again:
+        counter += 1
+        if counter > 30: break
+        print('excised root loop')
+        again = False
+        nr_objects = len(histogram)
+        if nr_objects > 1:
+            comp = np.argmax(histogram)
+            count = 0
+            if comp in exclude_idx:
+
+                histogram[comp] = 0
+                comp = np.argmax(histogram)
+                if count > len(exclude_idx):
+                    print('Error: Image is not usable')
+                    idx2 = -1
+                    break
+                else:
+                    count += 1
+            idx2 = comp
+            histogram[idx2] = 0
+        else:
+            idx2 = -1
+
+        image_copy = image.copy()
+        idx = np.where(image_copy == idx2)
+
+        # bounding box
+        try:
+            iMin = np.min(idx[0])
+            jMin = np.min(idx[1])
+            iMax = np.max(idx[0])
+            jMax = np.max(idx[1])
+            print('xMin and xMax of Excised Root: ' + str(jMin) + ' ' + str(jMax))
+            print('yMin and yMax of Excised Root: ' + str(iMin) + ' ' + str(iMax))
+            print('xMax of crown: ' + str(crown_max))
+            print('xMin of crown: ' + str(crown_min))
+            sel = image_copy != idx2
+            image_copy[sel] = 0
+            nonZ = len(idx[0])
+            boundingBoxSize = (iMax - iMin) * (jMax - jMin)
+            zeros = boundingBoxSize - nonZ
+            ratio = float(zeros) / float(nonZ)
+            print('ratio: ' + str(ratio))
+
+            if counter >= nr_objects:
+                again = False
+        except:
+            again = True
+    sel = image_copy == idx2
+    image_copy[sel] = 255
+    return idx2, image_copy[iMin:iMax, jMin:jMax], (iMax + iMin) / 2, (jMax + jMin) / 2,
+
+
+def medial_axis_skeleton(image: np.ndarray) -> (np.ndarray, np.ndarray):
+    # to achieve consistent result between distance field and medial axis skeleton, set image borders to black
+    image[0, :] = 0
+    image[len(image) - 1, :] = 0
+    image[:, len(image[0]) - 1] = 0
+    image[:, 0] = 0
+
+    distance = np.sqrt(distance_transform_edt(image > 0)) * 2
+    med_axis = medial_axis(image > 0)
+
+    return med_axis, distance
+
+
+def label(image: np.ndarray) -> np.ndarray:
+    labeled, nr_objects = ndimage.label(image)
+
+    if nr_objects == 0:
+        return None
+
+    val = labeled.flatten()
+    hist = []
+    hist += range(np.max(val) + 1)
+    test, _ = np.histogram(val, hist)
+    comp1 = np.max(test)
+    idx1 = list(test).index(comp1)
+
+    if nr_objects > 1:
+        test[idx1] = 0
+        comp2 = np.max(test)
+        idx2 = list(test).index(comp2)
+        test[idx2] = 0
+    else:
+        idx2 = 1
+
+    idx = np.where(labeled == idx2)
+
+    # bounding box
+    i_min = np.min(idx[0])
+    j_min = np.min(idx[1])
+    i_max = np.max(idx[0])
+    j_max = np.max(idx[1])
+
+    # just return the cropped image of the largest component
+    return labeled[i_min:i_max, j_min:j_max]
+
+
+def segment_internal(options: DIRTOptions, image: np.ndarray):
+    output_prefix = join(options.output_directory, options.input_stem)
+
+    # find features
+    labeled, _ = ndimage.label(image)
+
+    # calculate histogram
+    histogram, bin_edges, x_components, y_components = calculate_histogram(labeled)
+
+    # find crown
+    crown, crown_list, crown_left, crown_right, crown_bottom, crown_top = find_crown(
+        labeled.copy(),
+        histogram)
+
+    # find marker
+    marker, marker_ratio, marker_left, marker_right, marker_top, marker_bottom, _ = find_marker(
+        labeled.copy(),
+        histogram,
+        x_components,
+        y_components)
+    marker_width = float(marker_left) - float(marker_right)
+    marker_height = float(marker_bottom) - float(marker_top)
+
+    try:
+        histogram[marker] = 0
+    except:
+        pass
+
+    # find tag
+    tag, tag_list, tag_left, tag_right, tag_bottom, tag_top = find_tag(
+        labeled.copy(),
+        histogram,
+        [marker, crown],
+        crown,
+        crown_list)
+
+    try:
+        histogram[tag] = 0
+    except:
+        pass
+
+    # find excised root(s)
+    if options.excised_roots > 1 and options.crown_root:
+        for i in range(options.excised_roots):
+            exRIdx, imgExRoot, centerPtx, centerPty = find_excised(
+                labeled.copy(),
+                histogram,
+                [marker, tag, crown],
+                crown_left,
+                crown_right)
+            print(f"Found excised root {i}")
+    elif options.excised_roots == 1 and not options.crown_root:
+        exRIdx, imgExRoot, centerPtx, centerPty = find_excised(
+            labeled.copy(),
+            histogram,
+            [marker, tag],
+            0,
+            1)
+
+    # save masked image to file
+    imageio.imwrite(f"{output_prefix}.mask.png", skimage.img_as_uint(image))
+
+    # save crown bounding box overlay to file
+    fig, ax = plt.subplots(1)
+    ax.imshow(image)
+    crown_patch = patches.Rectangle(
+        (crown_top, crown_left),
+        crown_bottom - crown_top,
+        crown_right - crown_left,
+        edgecolor='r')
+    crown_patch.set_alpha(0.5)
+    ax.add_patch(crown_patch)
+    plt.axis('off')
+    plt.savefig(f"{output_prefix}.crown.bounding.png")
+    plt.clf()
+
+    # save marker bounding box overlay to file
+    fig, ax = plt.subplots(1)
+    ax.imshow(image)
+    marker_patch = patches.Rectangle(
+        (marker_top, marker_left),
+        marker_bottom - marker_top,
+        marker_right - marker_left,
+        edgecolor='r')
+    marker_patch.set_alpha(0.5)
+    ax.add_patch(marker_patch)
+    plt.axis('off')
+    plt.savefig(f"{output_prefix}.marker.bounding.png")
+    plt.clf()
+
+    # save tag bounding box overlay to file
+    fig, ax = plt.subplots(1)
+    ax.imshow(image)
+    tag_patch = patches.Rectangle(
+        (tag_top, tag_left),
+        tag_bottom - tag_top,
+        tag_right - tag_left,
+        edgecolor='r')
+    tag_patch.set_alpha(0.5)
+    ax.add_patch(tag_patch)
+    plt.axis('off')
+    plt.savefig(f"{output_prefix}.tag.bounding.png")
+    plt.clf()
+
+    return '', marker_ratio, marker_width, marker_height
+
+
+def segment(options: DIRTOptions, image: np.ndarray) -> DIRTResults:
+    print(f"Segmenting file: {options.input_name}")
+    start = time.time()
+
+    tag, marker_ratio, marker_width, marker_height = segment_internal(options=options, image=image)
+    x_scale = options.marker_diameter / float(marker_width)
+    y_scale = options.marker_diameter / float(marker_height)
+
+    seconds = time.time() - start
+    print(f"Segmentation finished in {seconds} seconds")
+
+    return DIRTResults(
+        image_name=options.input_stem,
+        tag=tag,
+        marker_ratio=round(float(marker_ratio), 3),
+        marker_width=marker_width,
+        marker_height=marker_height,
+        x_scale=1.0 if x_scale <= 0.0 else x_scale,
+        y_scale=1.0 if y_scale <= 0.0 else y_scale)
