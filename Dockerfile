@@ -7,7 +7,7 @@ LABEL maintainer="Wes Bonelli"
 #     echo 'deb-src http://downloads.skewed.de/apt/xenial xenial universe' | tee -a  /etc/apt/sources.list && \
 COPY . /opt/DIRT
 
-RUN pacman -S --noconfirm gcc git python-pip && \
+RUN pacman -S --noconfirm gcc git python-pip libgv && \
     cd /opt/DIRT && \
     sed -i 's#/usr/local/bin/zbarimg#/usr/bin/zbarimg#' /opt/DIRT/ocr.py && \
     pip install -r /opt/DIRT/requirements.txt

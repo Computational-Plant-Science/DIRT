@@ -53,6 +53,7 @@ def extract_graph(image: np.ndarray, diameter, x_scale: float, y_scale: float) -
             line1 = added_vertices_line2 + list(line1)
             for jdx, j in enumerate(line1):
                 vertex_prop[v_list[jdx]] = {'imgIdx': (j, idx), 'coord': (float(j) * x_scale, float(idx) * y_scale),
+                                            'abs_coord': (float(j), float(idx)),
                                             'nrOfPaths': 0, 'diameter': float(diameter[idx][j]) * avg_scale}
 
             # keep order of the inserted vertices
@@ -97,6 +98,7 @@ def extract_graph(image: np.ndarray, diameter, x_scale: float, y_scale: float) -
                         vNew = graph.add_vertex()
                         vertex_prop[vNew] = {'imgIdx': (v1, idx + 1),
                                              'coord': (float(v1) * x_scale, float(idx + 1) * y_scale), 'nrOfPaths': 0,
+                                             'abs_coord': (float(j), float(idx)),
                                              'diameter': float(diameter[idx + 1][v1]) * avg_scale}
                         v_list_line2.append(vNew)
                         e = graph.add_edge(v_list[line1.index(v1)], vNew)
@@ -114,6 +116,7 @@ def extract_graph(image: np.ndarray, diameter, x_scale: float, y_scale: float) -
                         vNew = graph.add_vertex()
                         vertex_prop[vNew] = {'imgIdx': (v1 + 1, idx + 1),
                                              'coord': (float(v1 + 1) * x_scale, float(idx + 1) * y_scale),
+                                             'abs_coord': (float(j), float(idx)),
                                              'nrOfPaths': 0,
                                              'diameter': float(diameter[idx + 1][v1 + 1]) * avg_scale}
                         v_list_line2.append(vNew)
@@ -132,6 +135,7 @@ def extract_graph(image: np.ndarray, diameter, x_scale: float, y_scale: float) -
                         vNew = graph.add_vertex()
                         vertex_prop[vNew] = {'imgIdx': (v1 - 1, idx + 1),
                                              'coord': (float(v1 - 1) * x_scale, float(idx + 1) * y_scale),
+                                             'abs_coord': (float(j), float(idx)),
                                              'nrOfPaths': 0,
                                              'diameter': float(diameter[idx + 1][v1 - 1]) * avg_scale}
                         v_list_line2.append(vNew)

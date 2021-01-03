@@ -1,8 +1,7 @@
 import time
-from math import ceil
+from math import ceil, sqrt
 from os.path import join
 from typing import List, Literal
-from statistics import mean
 
 import imageio
 import numpy as np
@@ -10,8 +9,13 @@ import warnings
 import scipy.stats
 import scipy.misc
 import scipy.interpolate
+import matplotlib.pyplot as plt
+from matplotlib import patches
 from skimage import img_as_uint
-from graph_tool import Graph
+import graph_tool.draw as gt
+import graph_tool.centrality as gc
+import graph_tool.topology as gtop
+from graph_tool import Graph, GraphView
 from graph_tool.libgraph_tool_core import VertexBase
 
 import kmeans as km
@@ -702,7 +706,11 @@ def traits(options: DIRTOptions, image: np.ndarray, results: DIRTResults) -> DIR
     # medial axis
     start = time.time()
     med_axis, med_axis_diameter = medial_axis_skeleton(image)
-    imageio.imwrite(f"{output_prefix}.medial.axis.png", img_as_uint(med_axis))
+    imageio.imwrite(f"{output_prefix}.medial.png", img_as_uint(med_axis))
+    med_axis_img = img_as_uint(med_axis)
+    med_axis_overlay = image.copy()
+    med_axis_overlay[np.where(med_axis_img != 0)] = 120
+    imageio.imwrite(f"{output_prefix}.medial.overlay.png", med_axis_overlay)
     print(f"Medial axis computed in {ceil(time.time() - start)} seconds")
 
     # thickest path
@@ -711,9 +719,26 @@ def traits(options: DIRTOptions, image: np.ndarray, results: DIRTResults) -> DIR
     num_branching_pts = graph.num_vertices()
     top_branch_point = initial_branching_point(graph, np.shape(med_axis)[0])
     thickest_path = thickest_full_path(graph, top_branch_point)
+    vp = graph.vertex_properties["vp"]
+    thickest_path_overlay = image.copy()
+    thickest_path_overlay[np.where(image != 0)] = 120
+    for point in thickest_path:
+        thickest_path_overlay[int(vp[point]['abs_coord'][1]), int(vp[point]['abs_coord'][0])] = 255
+    imageio.imwrite(f"{output_prefix}.thickest.overlay.png", thickest_path_overlay)
     current = DIRTResults(branching_points=num_branching_pts)
     results = {**results, **current}
-    print(f"Central path computed in {ceil(time.time() - start)} seconds")
+    print(f"Thickest path computed in {ceil(time.time() - start)} seconds")
+
+    # minimum spanning tree
+    # start = time.time()
+    # mst = GraphView(graph, efilt=gtop.min_spanning_tree(graph))
+    # pos = gt.sfdp_layout(mst)
+    # gt.graph_draw(
+    #     mst,
+    #     pos=pos,
+    #     edge_pen_width=mst.edge_properties['w'],
+    #     output=f"{output_prefix}.mst.png")
+    # print(f"Minimum spanning tree computed in {ceil(time.time() - start)} seconds")
 
     # skeleton
     start = time.time()
