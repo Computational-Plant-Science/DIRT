@@ -41,3 +41,12 @@ jobs:
           COVERALLS_PARALLEL: true
         run: |
           docker run -t -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN -e COVERALLS_PARALLEL=$COVERALLS_PARALLEL -v $PWD:/opt/dev -w /opt/dev computationalplantscience/dirt coverage run -m pytest -s && coveralls
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist-without-markdown
+          path: |
+            tests/output/*.csv
+            tests/output/*.yml
+            tests/output/*.jpg
+            tests/output/*.png
