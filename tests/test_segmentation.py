@@ -5,7 +5,6 @@ import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import skimage
 from scipy import ndimage
 import pytest
 
