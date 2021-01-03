@@ -40,5 +40,4 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: |
-          coverage run --source=DIRT -m pytest /home/runner/work/DIRT/DIRT/tests -s
-          coveralls
+          docker run -it -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN -e COVERALLS_PARALLEL=$COVERALLS_PARALLEL -v $PWD:/opt/dev -w /opt/dev computationalplantscience/dirt coverage run -m pytest -s && coveralls
