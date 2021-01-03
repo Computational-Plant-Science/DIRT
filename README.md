@@ -1,5 +1,7 @@
 # DIRT 
 
+![CI](https://github.com/Computational-Plant-Science/DIRT/workflows/CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/Computational-Plant-Science/DIRT/badge.svg?branch=master)](https://coveralls.io/github/Computational-Plant-Science/DIRT?branch=master)
+
 An automatic root phenotyping tool.
 
 ## Requirements
