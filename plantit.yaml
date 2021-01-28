@@ -22,7 +22,7 @@ output:
       - png
       - jpg
 resources:
-  time: "03:00:00"
-  mem: "10GB"
+  time: "01:00:00"
+  mem: "5GB"
   tasks: 1
   cores: 1
