@@ -1,8 +1,6 @@
 name: DIRT
 author: Alexander Bucksch
 public: True
-clone: True
-branch: plantit
 image: docker://computationalplantscience/dirt
 commands: python /opt/DIRT/dirt.py "$INPUT"
 logo: dirt_logo.jpg
@@ -24,5 +22,5 @@ output:
 resources:
   time: "01:00:00"
   mem: "5GB"
-  tasks: 1
+  processes: 1
   cores: 1
