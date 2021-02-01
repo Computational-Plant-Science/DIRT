@@ -16,6 +16,7 @@ output:
   path:
   include:
     patterns:
+      - csv
       - yml
       - png
       - jpg
