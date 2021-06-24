@@ -52,6 +52,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 '''
+import skimage
 
 '''
 # external library imports
@@ -59,6 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import numpy as np
 import scipy.misc
 import scipy.ndimage
+import imageio
 
 '''
 # internal library imports
@@ -93,7 +95,7 @@ class Preprocessing(object):
         self.__tagCrop=10
         
     def prepocess(self,img,rootCrown,scale=1.0,nrExRoot=1, marker=True, stemCorrection=False):
-        print 'starting to segment'
+        print('starting to segment')
         rIdx=-1
         self.__io.setServerPath('./')
         circleIdx= circleRatio= circleWidth= circleHeight= imgCircle = 0
@@ -101,10 +103,10 @@ class Preprocessing(object):
         orig=img.copy()
         mask=Masking.Masking(scale=scale)
         imgGrey = img.astype(np.uint8)
-        print 'make mask'
+        print('make mask')
         imgBinary=mask.calculateMask(imgGrey)
-        print 'saving binary mask'
-        scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', imgBinary)
+        print('saving binary mask')
+        imageio.imwrite(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'.png', skimage.img_as_uint(imgBinary))
         pathold=os.getcwd()
         os.chdir(self.__io.getHomePath())
         self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Mask/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
@@ -112,16 +114,16 @@ class Preprocessing(object):
         imgLabel=self.calculateLabelHist(imgBinary)
 
         if marker== True: 
-            print 'Marker is True'
+            print('Marker is True')
             circleIdx, circleRatio, circleWidth, circleHeight, imgCircle =self.findCircle(imgLabel.copy())
         else: 
-            print 'Marker is False'
+            print('Marker is False')
             circleIdx, circleRatio, circleWidth, circleHeight, imgCircle = -1, 1, 1, 1, None
         
         rectIdx, _, _, _,imgTag, tagText =self.findTag(imgLabel.copy() , imgBinary, orig, rect_ratio=5.)
        
         if rectIdx >=0:
-            print 'tagIdx'+str(rectIdx)
+            print('tagIdx'+str(rectIdx))
             try: self.__labelHist[rectIdx] = 0
             except: pass
 
@@ -135,10 +137,10 @@ class Preprocessing(object):
         if rootCrown==True:
             rIdx,rIdxList,crownMin,crownMax,crownBottom,crownTop=self.findRoot(imgLabel.copy()) 
             if stemCorrection== True: 
-                print 'Stem reconstruction is active '
+                print('Stem reconstruction is active ')
                 imgRoot=self.correctForStem(imgLabel.copy(), [circleIdx,rectIdx,rIdx], crownMin, crownMax, crownBottom, crownTop, rIdx, rIdxList)
             else:
-                print 'No stem reconstruction active' 
+                print('No stem reconstruction active' )
                 imgReturn=np.zeros_like(imgLabel)
                 imgReturn[rIdxList]=1
                 imgRoot=imgReturn[crownMax:crownMin,crownBottom:crownTop]
@@ -148,54 +150,54 @@ class Preprocessing(object):
             for i in range(nrExRoot): 
                 exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMin,crownMax)
                 if exRIdx != -1:
-                    print 'found excised root '+str(i)
+                    print('found excised root '+str(i))
                     try: 
-                        scipy.misc.imsave(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
-                        print 'excised root '+str(i)+'saved'
+                        imageio.imwrite(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
+                        print('excised root '+str(i)+'saved')
                     except:
-                        print 'NOT SAVED !!!'
+                        print('NOT SAVED !!!')
                         raise
                     try: 
                         pathold=os.getcwd()
                         os.chdir(self.__io.getHomePath())
                         self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Lateral/'+self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png,' +str(self.__io.getID())+',0')
-                        print 'excised root '+str(i)+'saved Server'
+                        print('excised root '+str(i)+'saved Server')
                         os.chdir(pathold)
                     except: 
-                        print 'NOT SAVED !!!!'
+                        print('NOT SAVED !!!!')
                         raise
         elif nrExRoot ==1 and rootCrown==True: 
             exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx,rIdx],crownMin,crownMax)
             if exRIdx != -1:
-                print 'found the excised root '
+                print('found the excised root ')
                 try: 
                     pathold=os.getcwd()
                     os.chdir(self.__io.getHomePath())
-                    scipy.misc.imsave(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
-                    print 'excised root saved' 
+                    imageio.imwrite(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
+                    print('excised root saved' )
                     self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Lateral/'+self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png,' +str(self.__io.getID())+',0')
-                    print 'excised root saved Server'
+                    print('excised root saved Server')
                     os.chdir(pathold)
-                except: print 'NOT SAVED !!!!'
+                except: print('NOT SAVED !!!!')
         elif nrExRoot ==1 and rootCrown==False:
             exRIdx,imgExRoot,centerPtx,centerPty=self.findExcisedRoot(imgLabel.copy(),[circleIdx,rectIdx],0,1)
             if exRIdx != -1:
-                print 'found the excised root '
+                print('found the excised root ')
                 rIdx=-1
                 try: 
                     pathold=os.getcwd()
                     os.chdir(self.__io.getHomePath())
-                    scipy.misc.imsave(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
-                    print 'excised root saved' 
+                    imageio.imwrite(self.__io.getHomePath()+'/Lateral/' + self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png', imgExRoot)
+                    print('excised root saved' )
                     self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Lateral/'+self.__io.getFileName()+'_'+str(centerPtx)+'_'+str(centerPty)+'.png,' +str(self.__io.getID())+',0')
-                    print 'excised root saved Server'
+                    print('excised root saved Server')
                     os.chdir(pathold)
-                except: print 'NOT SAVED !!!!'
+                except: print('NOT SAVED !!!!')
             
         
         if marker==True:
-            scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Circle.png', imgCircle)
-            scipy.misc.imsave(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Tag.png', imgTag)
+            imageio.imwrite(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Circle.png', imgCircle)
+            imageio.imwrite(self.__io.getHomePath()+'/Mask/' + self.__io.getFileName()+'Tag.png', skimage.img_as_uint(imgTag))
         #pathold=os.getcwd()
         #os.chdir(self.__io.getHomePath())
         
@@ -208,21 +210,21 @@ class Preprocessing(object):
             If image is usable, then it gets segmented and copied. Otherwise we ignore it
             '''
             try:
-                print 'root image to be saved'
-                scipy.misc.imsave(self.__io.getHomePath()+'/Crown/' + self.__io.getFileName()+'.png', imgRoot)
+                print('root image to be saved')
+                imageio.imwrite(self.__io.getHomePath()+'/Crown/' + self.__io.getFileName()+'.png', imgRoot)
             except: 
-                print 'CROWN NOT SAVED'
+                print('CROWN NOT SAVED')
                 raise
             try:
                 pathold=os.getcwd()
                 os.chdir(self.__io.getHomePath()) 
                 self.__io.writeServerFile('dirt_out.csv',self.__io.getHomePath()+'/Crown/'+self.__io.getFileName()+'.png,' +str(self.__io.getID())+',0')
                 os.chdir(pathold)
-            except: print 'MASK NOT WRITTEN TO SERVER FILE'
+            except: print('MASK NOT WRITTEN TO SERVER FILE')
         elif rIdx == -1 and exRIdx !=-1:
-            print "Only excised roots computed"
+            print("Only excised roots computed")
         else: Failed=True
-        print "old path: "+pathold
+        print("old path: "+pathold)
         return  Failed,tagText,circleRatio, circleWidth, circleHeight
         
     def calculateLabelHist(self,imgBinary):
@@ -263,7 +265,7 @@ class Preprocessing(object):
         return labeled
                 
     def findCircle(self, labeled):
-        print 'searching circle'
+        print('searching circle')
         ratio = []
         w,h=np.shape(labeled)
         for i in range(len(self.__compsX)):
@@ -292,7 +294,7 @@ class Preprocessing(object):
                                 determine tag ratio
                                 '''
                                 tagRatio=(float(xMax) - float(xMin)) / (float(yMax) - float(yMin))
-                                print 'Circle Ratio : '+str(tagRatio) +' ID: '+str(self.__currentIdx)
+                                print('Circle Ratio : '+str(tagRatio) +' ID: '+str(self.__currentIdx))
                                 ratio.append(np.abs(1-(float(xMax) - float(xMin)) / (float(yMax) - float(yMin))))
                         else: ratio.append(1000)  
                     else: ratio.append(1000) 
@@ -309,7 +311,7 @@ class Preprocessing(object):
         yMax = np.max(self.__compsY[rectIdx])
        
         
-        print 'Circle Ratio: '+str(rect)
+        print('Circle Ratio: '+str(rect))
         
         idx = np.where(labeled==rectIdx)
         '''
@@ -324,7 +326,7 @@ class Preprocessing(object):
         labeled[sel]=0
         
         if rect > 0.2: 
-            print 'Error: No circle detectable'
+            print('Error: No circle detectable')
             rect=1
             rectIdx=0
 
@@ -332,7 +334,7 @@ class Preprocessing(object):
                     
 
     def findRoot(self, labeledToCopy):
-        print 'searching rootstock'
+        print('searching rootstock')
         labeled=labeledToCopy.copy()
         h,w=np.shape(labeled)
         found=False
@@ -349,7 +351,7 @@ class Preprocessing(object):
                     found=False
                     count+=1
                 else: found=True
-                print 'Only 1 background component that is smaller than the foreground ??? Probably a bug in the Masking routine'
+                print('Only 1 background component that is smaller than the foreground ??? Probably a bug in the Masking routine')
             else:
                 found=True
     
@@ -361,8 +363,8 @@ class Preprocessing(object):
         iMax=np.max(idx[0])
         jMax=np.max(idx[1])
        
-        print 'xMin and xMax of Root Crown: '+str(iMin)+' '+str(iMax)
-        print 'yMin and yMax of Root Crown: '+str(jMin)+' '+str(jMax)
+        print('xMin and xMax of Root Crown: '+str(iMin)+' '+str(iMax))
+        print('yMin and yMax of Root Crown: '+str(jMin)+' '+str(jMax))
         
         
         return idx1,idx,iMax,iMin,jMin,jMax
@@ -372,7 +374,7 @@ class Preprocessing(object):
         We loop through detected objects to identify them. During recognition the labeled image has to be made free of noise.
         Therefore we have to copy it.
         '''
-        print 'checking for stem part'
+        print('checking for stem part')
         labeled=labeledToCopy.copy()
         idx2=-1
         counter=0
@@ -380,7 +382,7 @@ class Preprocessing(object):
         while again==True:
             counter+=1
             if counter>30: break
-            print 'stem part loop'
+            print('stem part loop')
             again=False
             nr_objects=len(self.__labelHist)
             if nr_objects>1:     
@@ -390,7 +392,7 @@ class Preprocessing(object):
                     self.__labelHist[comp] = 0      
                     comp = np.argmax(self.__labelHist)
                     if count>len(excludeIdx):
-                        print 'Error: Image is not usable'
+                        print('Error: Image is not usable')
                         idx2=-1
                         break
                     else: count +=1
@@ -410,17 +412,17 @@ class Preprocessing(object):
                 iMax=np.max(idx[0])
                 jMax=np.max(idx[1])
                 
-                print 'xMin and xMax of stem part: '+str(iMin)+' '+str(iMax)
-                print 'yMin and yMax of stem part: '+str(jMin)+' '+str(jMax)
-                print 'yMax of crown: '+str(top)
-                print 'xMin of crown: '+str(bottom)
+                print( 'xMin and xMax of stem part: '+str(iMin)+' '+str(iMax))
+                print( 'yMin and yMax of stem part: '+str(jMin)+' '+str(jMax))
+                print( 'yMax of crown: '+str(top))
+                print( 'xMin of crown: '+str(bottom))
                 sel = labeled != idx2 
                 labeled[sel]=0
                 nonZ=len(idx[0])
                 boundingBoxSize=(iMax-iMin)*(jMax-jMin)
                 zeros=boundingBoxSize-nonZ
                 ratio=float(zeros)/float(nonZ)
-                print 'ratio: '+str(ratio)
+                print('ratio: '+str(ratio))
                      
                 if counter>=nr_objects:
                     again=False
@@ -441,7 +443,7 @@ class Preprocessing(object):
             for i in range(rep):
                 imgReturn[iMax*0.9:right*1.1,jMin:jMax]=scipy.ndimage.binary_dilation(imgReturn[iMax*0.9:right*1.1,jMin:jMax]).astype(np.int)
                 imgLabel,nrOfObjPart=scipy.ndimage.label(imgReturn[iMin:left,bottom:top])
-                print 'nrOfObj = '+str(nrOfObjPart)
+                print('nrOfObj = '+str(nrOfObjPart))
                 if nrOfObjPart == 1:
                     break
 
@@ -464,7 +466,7 @@ class Preprocessing(object):
         We loop through detected objects to identify them. During recognition the labeled image has to be made free of noise.
         Therefore we have to copy it.
         '''
-        print 'searching excised root'
+        print('searching excised root')
         labeled=labeledToCopy.copy()
         w,h=np.shape(labeled)
         idx2=-1
@@ -474,7 +476,7 @@ class Preprocessing(object):
         while again==True:
             counter+=1
             if counter>30: break
-            print 'excised root loop'
+            print('excised root loop')
             again=False
             nr_objects=len(self.__labelHist)
             if nr_objects>1:     
@@ -485,7 +487,7 @@ class Preprocessing(object):
                     self.__labelHist[comp] = 0      
                     comp = np.argmax(self.__labelHist)
                     if count>len(excludeIdx):
-                        print 'Error: Image is not usable'
+                        print('Error: Image is not usable')
                         idx2=-1
                         break
                     else: count +=1
@@ -505,17 +507,17 @@ class Preprocessing(object):
                 jMin=np.min(idx[1])
                 iMax=np.max(idx[0])
                 jMax=np.max(idx[1])
-                print 'xMin and xMax of Excised Root: '+str(jMin)+' '+str(jMax)
-                print 'yMin and yMax of Excised Root: '+str(iMin)+' '+str(iMax)
-                print 'xMax of crown: '+str(maxOfCrown)
-                print 'xMin of crown: '+str(minOfCrown)
+                print( 'xMin and xMax of Excised Root: '+str(jMin)+' '+str(jMax))
+                print( 'yMin and yMax of Excised Root: '+str(iMin)+' '+str(iMax))
+                print( 'xMax of crown: '+str(maxOfCrown))
+                print( 'xMin of crown: '+str(minOfCrown))
                 sel = labeled != idx2
                 labeled[sel]=0
                 nonZ=len(idx[0])
                 boundingBoxSize=(iMax-iMin)*(jMax-jMin)
                 zeros=boundingBoxSize-nonZ
                 ratio=float(zeros)/float(nonZ)
-                print 'ratio: '+str(ratio)
+                print('ratio: '+str(ratio))
 
                 if counter>=nr_objects:
                     again=False
@@ -527,7 +529,7 @@ class Preprocessing(object):
         return idx2,labeled[iMin:iMax, jMin:jMax],(iMax+iMin)/2,(jMax+jMin)/2,
         
     def findTag(self, labeled, imgBinary, img, rect_ratio=0.33):
-        print 'searching tag'
+        print('searching tag')
 
         ratio = []
         for i in range(len(self.__compsX)):
@@ -549,7 +551,7 @@ class Preprocessing(object):
                         '''
                         if yMin< (self.__h*0.5): 
                             tagRatio=(float(xMax) - float(xMin)) / (float(yMax) - float(yMin))
-                            print 'TagRatio detected: '+str(tagRatio)+' ID: '+str(self.__currentIdx)
+                            print('TagRatio detected: '+str(tagRatio)+' ID: '+str(self.__currentIdx))
                             ratio.append((float(xMax) - float(xMin)) / (float(yMax) - float(yMin)))
                         else: ratio.append(-1)
                     else: ratio.append(-1)
@@ -568,7 +570,7 @@ class Preprocessing(object):
             xMin=xMax=yMin=yMax = 0
             rectIdx =-1
 
-        print 'Tag Ratio: '+str(rect)
+        print('Tag Ratio: '+str(rect))
         if rect ==-1: 
             rectIdx=-1
             iMin=iMax=jMin=jMax=0
@@ -586,7 +588,7 @@ class Preprocessing(object):
         if rect>=0: 
             labeled[sel]=0
             try:
-                print 'Check for text'
+                print('Check for text')
                 tagText=ocr.getTextFromImage(img[iMin+self.__tagCrop:iMax-self.__tagCrop, jMin+self.__tagCrop:jMax-self.__tagCrop],self.__io.getHomePath(),str(self.__id))
             except:
                 tagText='Tag text extraction Failed'
@@ -595,13 +597,13 @@ class Preprocessing(object):
             This order prefers the barcode over the text reader
             '''
             try: 
-                print 'Check for barcode'
+                print('Check for barcode')
                 tagCode=ocr.getCodeFromImage(img[iMin+self.__tagCrop:iMax-self.__tagCrop, jMin+self.__tagCrop:jMax-self.__tagCrop],self.__io.getHomePath())
                 if len(tagCode) >2:
                     tagText=tagCode[8:len(tagCode)-1]
-                    print tagText
+                    print(tagText)
                 else:
-                    print 'bar code to short: '+tagCode
+                    print('bar code to short: '+tagCode)
             except:
                 pass
                 
@@ -611,7 +613,7 @@ class Preprocessing(object):
         else:
             tagText= 'No label found'
         
-        print 'return value rectIdx: '+str(rectIdx)
+        print('return value rectIdx: '+str(rectIdx))
         return rectIdx, rect, float(xMax) - float(xMin), float(yMax) - float(yMin),imgBinary[iMin+self.__tagCrop:iMax-self.__tagCrop, jMin+self.__tagCrop:jMax-self.__tagCrop],tagText
 
     

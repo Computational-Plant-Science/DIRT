@@ -119,26 +119,26 @@ class IO(object):
         if directory==0: scanPath=self.__path
         else: scanPath = directory
         files = []
-        print os.getcwd()
+        print(os.getcwd())
         listing = os.listdir(scanPath)
         for infile in listing:
             if os.path.isdir(scanPath + infile) == True:
-                print infile + ' is not a file'
+                print(infile + ' is not a file')
             elif infile[0]=='.':
-                print infile + ' is not a file'
+                print(infile + ' is not a file')
             elif infile[len(infile)-4:]=='.ini':
-                print infile + ' is not a file'
+                print(infile + ' is not a file')
             elif infile[len(infile)-4:]=='.csv':
-                print infile + ' is not a file'
+                print(infile + ' is not a file')
             else:
-                print "current file is: " + infile
+                print("current file is: " + infile)
                 files.append(scanPath+'/'+infile) 
         return files
     
     def writeServerFile(self,serverFile,string):
         path=self.__serverPath
-        print "server file (working directory): "+str(os.getcwd())
-        print "server file (relative): "+str(path)
+        print("server file (working directory): "+str(os.getcwd()))
+        print("server file (relative): "+str(path))
         try:
             if os.path.isfile(path+serverFile):
                 fout=open(path+serverFile, "a")
@@ -169,7 +169,7 @@ class IO(object):
         fout.write('\n')
         fout.close()
     def writeFile(self,para,traitsCrown,traitDict,all=False):
-        print "output directory: "+self.__path+"/output.csv"
+        print("output directory: "+self.__path+"/output.csv")
         try:
             if os.path.isfile(self.__path+"/output.csv"):
                 fout=open(self.__path+"/output.csv", "a")
@@ -178,7 +178,7 @@ class IO(object):
             fout = open(self.__path+"/output.csv", "w")
             for i in self.__parameters:
                     fout.write(str(i)+',')
-            for k,v in traitDict.iteritems():
+            for k,v in traitDict.items():
                 if all==False:
                     if v==True:
                         if k in traitsCrown:
@@ -191,7 +191,7 @@ class IO(object):
 
         for i in para:
                     fout.write(str(i)+',')
-        for k,v in traitDict.iteritems():
+        for k,v in traitDict.items():
                 if v==True and k in traitsCrown:
                     fout.write(str(traitsCrown[k])+',')
                 elif all==True:

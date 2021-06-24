@@ -22,11 +22,11 @@ def calculate(args):
     try:
         return subprocess.call(args)
     except:
-        print "ERROR in File: "+str(args[2])
+        print("ERROR in File: "+str(args[2]))
 
 if __name__ == '__main__':
-    print os.getcwd()
-    print "runOnFolder.py <image directory> <output directory>  <segmentation threshold> <marker diameter>"
+    print(os.getcwd())
+    print("runOnFolder.py <image directory> <output directory>  <segmentation threshold> <marker diameter>")
     main_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'main.py'))
     startT=time.time()
     dir = os.path.abspath(sys.argv[1])
@@ -56,7 +56,7 @@ if __name__ == '__main__':
                              'traits.csv']) # trait file path
     r = pool.map_async(calculate, args)
     r.wait() # Wait on the results
-    print 'All files done in '+str(time.time()-startT)+'s !'
-    print 'Collecting results'
+    print('All files done in '+str(time.time()-startT)+'s !')
+    print('Collecting results')
     oc.combineOutput(work_dir) 
-    print 'Results written to ' + os.path.join(work_dir, 'outputAll.csv')
+    print('Results written to ' + os.path.join(work_dir, 'outputAll.csv'))

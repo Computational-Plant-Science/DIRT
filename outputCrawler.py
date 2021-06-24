@@ -30,7 +30,7 @@ def combineOutput(dirName):
             directories.append(i)
             
     ''' copy header'''
-    print directories 
+    print(directories )
     with open(os.path.join(dirName, directories[0], 'output.csv'), 'U') as csvfile:
         filedata = csv.reader(csvfile)
         rows = filedata.next()
@@ -59,5 +59,5 @@ def combineOutput(dirName):
     with open(os.path.join(dirName, "crawler.out"), "wb") as fo:
         fo.write( str(countOK) + ' images are processed and ' +str(countBAD) + ' images failed: \n' + str(badFolder))
         
-    print str(countOK)+' images are processed and '+str(countBAD)+' images failed: \n'+str(badFolder)
+    print(str(countOK)+' images are processed and '+str(countBAD)+' images failed: \n'+str(badFolder))
             

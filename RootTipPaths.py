@@ -51,6 +51,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 '''
+import traceback
 
 '''
 # external library imports
@@ -89,7 +90,7 @@ class RootTipPaths(object):
         
         if len(l1)>len(l2): l1=l1[:len(l2)]
         if len(l1)<len(l2): l2=l2[:len(l1)]
-        half=len(l1)/2
+        half=int(len(l1)/2)
         split=0
         
         if l1[half] == l2[half]:
@@ -137,7 +138,7 @@ class RootTipPaths(object):
             #print '***** TIPS VAR ******'
             #print tips
             if tips ==-1:
-                print 'ERROR: No tips found'
+                print('ERROR: No tips found')
                 return -1
             try:
                 tips.remove(G.vertex_index(thickestPath[0]))
@@ -165,11 +166,12 @@ class RootTipPaths(object):
                     for j in edges:
                         eprop[j]['RTP']=True
                 except:
-                    print 'ERROR: in def getRootTipPaths(self,thickestPath,G): no dijkstra path at '+str(idx)+' in tips'
+                    print(traceback.format_exc())
+                    print('ERROR: in def getRootTipPaths(self,thickestPath,G): no dijkstra path at '+str(idx)+' in tips')
                     pass
-            print 'Number of Root-Tip Paths: '+str(len(RTP))
+            print('Number of Root-Tip Paths: '+str(len(RTP)))
             self.__RTP=RTP
-        print 'RTP done!'
+        print('RTP done!')
         return RTP,tips
     
     def getTips(self,thickestPath,G,counter=None):
@@ -190,9 +192,9 @@ class RootTipPaths(object):
                     tipDia.append(vprop[i]['diameter'])
                     tipHeight.append(vprop[i]['coord'][0])
         self.__medianTipDiameter=np.median(tipDia)
-        print 'Median Tip Diameter: '+str(self.__medianTipDiameter)
+        print('Median Tip Diameter: '+str(self.__medianTipDiameter))
         self.__meanTipDiameter=np.mean(tipDia)
-        print 'Mean Tip Diameter: '+str(self.__meanTipDiameter)
+        print('Mean Tip Diameter: '+str(self.__meanTipDiameter))
         self.__io.saveArray(tipDia,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_TipDiaHisto')
         self.__io.saveArray(tipDia,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_TipDiaHeightX')
         self.__io.saveArray(tipHeight,self.__io.getHomePath()+'Plots/'+self.__io.getFileName()+'_TipDiaHeightY')
@@ -232,8 +234,8 @@ class RootTipPaths(object):
             startT=time.time()
             RTP,tips = self.getRootTipPaths(thickestPath, G)
             self.__RTP=RTP
-            print 'RTPs computed in ' +str(time.time()-startT)+'s'
-        print 'calculating RTP Skeleton'
+            print('RTPs computed in ' +str(time.time()-startT)+'s')
+        print('calculating RTP Skeleton')
 
         rtpSkel=G.copy()
         for e in G.edges():

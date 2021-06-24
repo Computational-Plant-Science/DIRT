@@ -99,15 +99,15 @@ class Masking(object):
         return image > (thresh_image - offset)
     
     def calculateMask(self,img):
-        print 'Masking input'
+        print('Masking input')
         if len(np.unique(img))<=2:
-            print 'Binary input detected, no thresholding performed'
+            print('Binary input detected, no thresholding performed')
             idx1=np.where(img==np.unique(img)[0])
             idx2=np.where(img==np.unique(img)[1])
             img[idx1]=False
             img[idx2]=True
         else:
-            print 'Grey input detected'
+            print('Grey input detected')
             T=m.otsu(img,ignore_zeros=False)
             T=T*self.__scale
             img = self.threshold_adaptive(img, 80, 'gaussian',offset=-20,param=T)

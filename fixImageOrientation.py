@@ -92,7 +92,7 @@ def fix_orientation(img, save_over=False):
     try:
         orientation = img._getexif()[EXIF_ORIENTATION_TAG]
     except (TypeError, AttributeError, KeyError):
-        print "WARNING: Image file has no EXIF data."
+        print("WARNING: Image file has no EXIF data.")
         orientation=-1
         pass
     if orientation in [3,6,8]:
