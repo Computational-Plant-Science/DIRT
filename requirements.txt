@@ -2,9 +2,9 @@
 Cython==0.29.23
 mahotas==1.4.11
 matplotlib==3.3.3
-numpy==1.19.3
-scipy==1.7.0
-scikit-image==0.18.0
+numpy==1.19.5
+scipy==1.5.4
+scikit-image==0.17.2
 scikit-learn==0.24.0
 opencv-python==4.4.0.46
 certifi==2020.12.5
