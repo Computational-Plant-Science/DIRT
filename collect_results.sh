@@ -1,2 +1,2 @@
 cat $INDEX/output.csv >> results.csv
-find . -type f | grep -i .png | xargs -i cp {} $WORKDIR
+find . -type f -name "*.png" -exec cp {} $WORKDIR \;
