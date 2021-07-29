@@ -3,7 +3,7 @@ author: Alexander Bucksch
 public: True
 doi: 10.1186/s13007-015-0093-3
 image: docker://computationalplantscience/dirt
-commands: python3 /opt/DIRT/main.py "$INPUT" $INDEX $MASK_THRESHOLD $EXCISED_ROOTS 1 1 25.1 0 0 0 $WORKDIR /opt/DIRT/traits.csv && /opt/DIRT/collect_results.sh
+commands: /opt/DIRT/shim.sh
 logo: dirt_logo.jpg
 params:
   - name: Mask Threshold
