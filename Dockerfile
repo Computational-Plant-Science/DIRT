@@ -19,7 +19,8 @@ COPY . /opt/DIRT
 RUN cd /opt/DIRT && \
     sed -i 's#/usr/local/bin/zbarimg#/usr/bin/zbarimg#' /opt/DIRT/DirtOcr/__init__.py && \
     pip3 install --upgrade pip && \
-    pip3 install -r /opt/DIRT/requirements.txt
+    pip3 install -r /opt/DIRT/requirements.txt && \
+    chmod +x /opt/DIRT/collect_results.sh
 
 ENV LC_ALL=C
 ENV DISPLAY=:1
