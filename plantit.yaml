@@ -16,7 +16,6 @@ params:
     type: number
     default: 0
 input:
-  path:
   kind: files
   filetypes:
     - jpg
@@ -24,7 +23,6 @@ input:
     - tif
     - tiff
 output:
-  path:
   include:
     patterns:
       - csv
