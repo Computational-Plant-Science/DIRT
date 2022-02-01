@@ -1,7 +1,9 @@
 name: DIRT
 author: Alexander Bucksch
 public: True
-doi: 10.1186/s13007-015-0093-3
+doi:
+  - 10.1104/pp.114.243519
+  - 10.1186/s13007-015-0093-3
 image: docker://computationalplantscience/dirt
 commands: /opt/DIRT/shim.sh
 logo: dirt_logo.jpg
