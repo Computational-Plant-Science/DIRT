@@ -6,7 +6,7 @@ doi:
   - 10.1186/s13007-015-0093-3
 image: docker://computationalplantscience/dirt
 commands: /opt/DIRT/shim.sh
-logo: dirt_logo.jpg
+logo: DIRTX-2D.png
 params:
   - name: Mask Threshold
     type: number
