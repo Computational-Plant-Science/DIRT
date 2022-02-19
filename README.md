@@ -5,7 +5,9 @@ An automatic high throughput root phenotyping platform
 ## License
 
 (c) 2014,2016 Alexander Bucksch - bucksch@uga.edu
+
 Web application by Abhiram Das - abhiram.das@gmail.com
+
 University of Georgia, Athens
 
 ## Support
@@ -28,22 +30,26 @@ path has to be adjusted in /DIRTocr/__init__.py (line 28)
 
 ## Usage
 
-Usage:
-<run file path> full path to the root image
-<unique id> ID which will be a folder name in the working directory. Integer value needed.
-<mask threshold> multiplier for the automatically determined mask threshold. 1.0 works fine and is default. For example, if a flashlight is used to take root images, then 0.6 is a good choice.
-<excised roots> number of roots placed at the right of the root crown, 0 - excised root analysis is off
-<crown root> 1 - crown root analysis is on, 0 - crown root analysis is off
-<segmentation> 1 -  is on, 0 - is off. Off refers to a pre-existing segmention done with DIRT. Binary masks as input images are detected automatically.
-<marker diameter> a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.
-<stem reconstruction> 1 - reconstruction is turned on, 0 - reconstruction is turned off
-<plots> 1 - plotting data is stored, 0 - plotting data is not stored
-<output format> 1 - the full trait set is put into one excel file containing empty cells for traits that were not computed, 0 - only computed files are written to the output file
-<working directory> full path to folder were the result is stored
-<trait file path> full path to .csv file containing the traits to be computed'
+### Parameters
 
-Example: 
+- run file path: full path to the root image
+- unique id: ID which will be a folder name in the working directory. Integer value needed.
+- mask threshold: multiplier for the automatically determined mask threshold. 1.0 works fine and is default. For example, if a flashlight is used to take root images, then 0.6 is a good choice.
+- excised roots: number of roots placed at the right of the root crown, 0 - excised root analysis is off
+- crown root: 1 - crown root analysis is on, 0 - crown root analysis is off
+- segmentation: 1 -  is on, 0 - is off. Off refers to a pre-existing segmention done with DIRT. Binary masks as input images are detected automatically.
+- marker diameter: a simple decimal e.g. 25.4. If 0.0 is used, then the output will have pixels as unit.
+- stem reconstruction: 1 - reconstruction is turned on, 0 - reconstruction is turned off
+- plots: 1 - plotting data is stored, 0 - plotting data is not stored
+- output format: 1 - the full trait set is put into one excel file containing empty cells for traits that were not computed, 0 - only computed files are written to the output file
+- working directory: full path to folder were the result is stored
+- trait file path: full path to .csv file containing the traits to be computed'
+
+### Example
+
+```
 python main.py /Documents/image_name.jpg 8 25.0 1 1 1 25.1 0 0 0 /Documents/image_folder/ /Documents/traits.csv
+```
 
 Notes on common questions:
 - Input is restricted to .jpg, .png and .tif images
