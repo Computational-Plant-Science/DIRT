@@ -2,6 +2,27 @@
 
 An automatic high throughput root phenotyping platform
 
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [DIRT 1.1](#dirt-11)
+  - [License](#license)
+  - [Support](#support)
+  - [Dependencies](#dependencies)
+  - [Usage](#usage)
+    - [Parameters](#parameters)
+    - [Example](#example)
+    - [Batch usage](#batch-usage)
+  - [Changelog](#changelog)
+    - [Updates in DIRT 1.1 (21 June 2019)](#updates-in-dirt-11-21-june-2019)
+    - [Updates in DIRT 1.1 (11 January 2016)](#updates-in-dirt-11-11-january-2016)
+    - [Updates in DIRT 1.1 (4 November 2015)](#updates-in-dirt-11-4-november-2015)
+    - [Changes in DIRT 1.1 (14 January 2015)](#changes-in-dirt-11-14-january-2015)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## License
 
 (c) 2014,2016 Alexander Bucksch - bucksch@uga.edu
