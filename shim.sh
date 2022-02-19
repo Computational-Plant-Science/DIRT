@@ -1,3 +1,3 @@
 python3 /opt/DIRT/main.py "$INPUT" $INDEX $MASK_THRESHOLD $EXCISED_ROOTS 1 1 25.1 0 0 0 $WORKDIR /opt/DIRT/traits.csv
-cat $INDEX/output.csv >> "$WORKDIR/results$INDEX.csv"
-find . -type f -name "*.png" -exec cp {} $WORKDIR \;
+cat $INDEX/output.csv > "$WORKDIR/results$INDEX.csv"
+find $INDEX -type f -name "*.png" -exec cp {} $WORKDIR \;

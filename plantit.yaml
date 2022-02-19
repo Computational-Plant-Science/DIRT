@@ -1,0 +1,36 @@
+name: DIRT\2D
+author: Alexander Bucksch
+public: True
+doi:
+  - 10.1104/pp.114.243519
+  - 10.1186/s13007-015-0093-3
+image: docker://computationalplantscience/dirt
+commands: /opt/DIRT/shim.sh
+logo: DIRTX-2D.png
+params:
+  - name: Mask Threshold
+    type: number
+    default: 10.0
+    step: 0.1
+    min: 0.1
+    max: 25.0
+  - name: Excised Roots
+    type: number
+    default: 0
+input:
+  kind: files
+  filetypes:
+    - jpg
+    - png
+    - tif
+    - tiff
+output:
+  include:
+    patterns:
+      - csv
+      - png
+jobqueue:
+  walltime: "01:00:00"
+  memory: "5GB"
+  processes: 1
+  cores: 1
