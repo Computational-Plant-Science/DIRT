@@ -1,24 +1,22 @@
-------------------------------------------------------------
-DIRT 1.1 - An automatic high throughput root phenotyping platform
+# DIRT 1.1
+
+An automatic high throughput root phenotyping platform
+
+## License
+
 (c) 2014,2016 Alexander Bucksch - bucksch@uga.edu
 Web application by Abhiram Das - abhiram.das@gmail.com
+University of Georgia, Athens
 
-http://dirt.iplantcollaborative.org
+## Support
 
 User and developer group: 
 https://groups.google.com/forum/#!forum/dirt-users
 
-University of Georgia, Athens
-------------------------------------------------------------
+## Dependencies
 
 The software is written and tested in:
-- python 2.7 (https://www.python.org)
-
-The software depends on:
-- the graphtools package (http://graph-tool.skewed.de) 
-- the mahotas package (http://luispedro.org/software/mahotas)
-- the numpy package (http://sourceforge.net/projects/numpy/)
-- the scipy package (http://www.scipy.org/SciPy)
+- python 3.6.9+ (https://www.python.org)
 
 Optionally binaries of standard OCR and BarCode software can be used for tag recognition:
 
@@ -27,6 +25,8 @@ paths have to be adjusted in /DIRTocr/pytesser.py (line 12-14)
 
 - zbar (http://zbar.sourceforge.net) 
 path has to be adjusted in /DIRTocr/__init__.py (line 28)
+
+## Usage
 
 Usage:
 <run file path> full path to the root image
@@ -49,7 +49,7 @@ Notes on common questions:
 - Input is restricted to .jpg, .png and .tif images
 - It is not possible to analyze only an excised root when a root crown is in the image. However, it is possible to analyze compute images containing only excised roots.
 
-------------------------------------------------------------
+### Batch usage
 
 For convenience we provide the runOnFolder script, that executes DIRT on all images in a specified folder. 
 Note we made the masking threshold available on the command line because of user requests.
@@ -58,24 +58,24 @@ Example: python runOnFolder.py /Users/image_folder/ <masking threshold>
 
 Please adjust line 86 according to the description above and note that the script uses 6 cores to compute images in parallel. The number of cores can be adjusted in line 80.
 
-------------------------------------------------------------
+## Changelog
 
-Updates in DIRT 1.1 (21 June 2019):
-------------------------------------------------------------
+### Updates in DIRT 1.1 (21 June 2019)
+
 - Some bug fixes on the avg. root density. There was a problem with very young and sparse root system. The formula changed and is now normed to the max. width instead of the max. width of the line.
 The bug was found by Peng Wang at the University of Nebraska.
 
-Updates in DIRT 1.1 (11 January 2016):
-------------------------------------------------------------
+### Updates in DIRT 1.1 (11 January 2016)
+
 - Minor bug fixes in Preprocessing.py to allow smaller circle markers and fix a possible missdetection of the experiment tag as the circle. 
 Thanks to Linda Zamariola (U Bologna) for finding this issue.
 
-Updates in DIRT 1.1 (4 November 2015):
-------------------------------------------------------------
+### Updates in DIRT 1.1 (4 November 2015)
+
 - Minor bug fixes in the excised root calculations. Thanks to Alexandre Grondin (U Nebraska) for discovering and validating the fixes.
 
-Changes in DIRT 1.1 (14 January 2015):
-------------------------------------------------------------
+### Changes in DIRT 1.1 (14 January 2015)
+
 - storage of trait values is changed from a list data structure to a dictionary to allow trait selection controlled by the file traits.csv
 - added support for trait selection to reduce computation time. See example file traits.csv (1 - trait is computed, 0 - trait is not computed)
 - removed unused tip-diameter switch on the command line
