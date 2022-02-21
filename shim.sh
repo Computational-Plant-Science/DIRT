@@ -2,7 +2,7 @@ python3 /opt/DIRT/main.py "$INPUT" $INDEX $MASK_THRESHOLD $EXCISED_ROOTS 1 1 25.
 
 # copy individual CSVs to working dir and concatenate CSV output into a single file
 results="$WORKDIR/output.$INDEX.csv"
-mv "$INDEX/output.csv" $results
+cp "$INDEX/output.csv" $results
 all_results="$WORKDIR/results.csv"
 if [ -s $all_results ]
 then
