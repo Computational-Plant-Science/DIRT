@@ -30,7 +30,7 @@ output:
       - png
       - jpg
 jobqueue:
-  walltime: "01:00:00"
+  walltime: "03:00:00"
   memory: "5GB"
   processes: 1
   cores: 1
