@@ -1,4 +1,4 @@
-python3 /opt/DIRT/main.py "$INPUT" $INDEX $MASK_THRESHOLD $EXCISED_ROOTS 1 1 25.1 0 0 0 $WORKDIR /opt/DIRT/traits.csv
+python3 /opt/DIRT/main.py "$INPUT" $INDEX $MASK_THRESHOLD $EXCISED_ROOTS 1 1 $MARKER_DIAMETER 0 0 0 $WORKDIR /opt/DIRT/traits.csv
 
 # copy individual CSVs to working dir and concatenate CSV output into a single file
 results="$WORKDIR/output.$INDEX.csv"
