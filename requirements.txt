@@ -1,4 +1,4 @@
-wheel==0.36.2
+wheel==0.38.1
 Cython==0.29.21
 mahotas==1.4.11
 numpy==1.19.2
