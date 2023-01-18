@@ -25,4 +25,4 @@ RUN cd /opt/DIRT && \
 ENV LC_ALL=C
 ENV DISPLAY=:1
 
-CMD python /opt/DIRT/main.py "$@"
+CMD python3 /opt/DIRT/main.py "$@"
