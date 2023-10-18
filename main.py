@@ -216,7 +216,10 @@ def threadSegmentation(filepath,imgFile,imgID,maxExRoot,rootCrown,marker):
 
     if os.path.isfile(image_file_path):
         # fix orientation of the image in tiff and Jpg files
-        fix_orientation(image_file_path, save_over=True)
+        try:
+            fix_orientation(image_file_path, save_over=True)
+        except:
+            pass
         img= scipy.misc.imread(image_file_path, flatten=True)
             
     else:
