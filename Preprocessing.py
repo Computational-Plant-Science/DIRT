@@ -118,7 +118,7 @@ class Preprocessing(object):
             circleIdx, circleRatio, circleWidth, circleHeight, imgCircle =self.findCircle(imgLabel.copy())
             if circleRatio == 1: 
                 circleIdx, circleRatio, circleWidth, circleHeight, imgCircle = -1, 1, 1, 1, None
-                marker == False
+                marker = False
         else: 
             print('Marker is False')
             circleIdx, circleRatio, circleWidth, circleHeight, imgCircle = -1, 1, 1, 1, None
